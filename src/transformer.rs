@@ -539,10 +539,10 @@ enum DeserializeTransformMapError {
     Failed,
 }
 
-type TransformMapInner = IndexMap<&'static str, Transform>;
+type TransformMapInner<T> = IndexMap<&'static str, Transform<T>>;
 // Named `TransformMapObject` in yomitan.
 #[derive(Debug, Clone)]
-pub struct TransformMap(pub TransformMapInner);
+pub struct TransformMap(pub TransformMapInner<T>);
 
 // impl<'de> Deserialize<'de> for TransformMap {
 //     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -555,19 +555,19 @@ pub struct TransformMap(pub TransformMapInner);
 //     }
 // }
 
-impl std::ops::Deref for TransformMap {
-    type Target = TransformMapInner;
+impl<T: DeinflectFnTrait> std::ops::Deref for TransformMap<T> {
+    type Target = TransformMapInner<T>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Transform {
+pub struct Transform<T: DeinflectFnTrait> {
     pub name: &'static str,
     pub description: Option<&'static str>,
     pub i18n: Option<Vec<TransformI18n>>,
-    pub rules: Vec<SuffixRule>,
+    pub rules: Vec<T>,
 }
 
 #[derive(Debug, Clone)]
@@ -698,24 +698,20 @@ mod suffix_rule {
     }
 }
 
-// impl SuffixRule<'_> {
-//     fn deinflect(&self, text: &str, inflected_suffix: &str, deinflected_suffix: &str) -> String {
-//         let base_length = text.len().saturating_sub(inflected_suffix.len());
-//         let base = &text[..base_length];
-//         format!("{}{}", base, deinflected_suffix)
-//     }
-// }
-
-pub struct Rule<'a, F>
-where
-    F: Fn(&str, &str, &str) -> String,
-{
+#[derive(Debug, Clone)]
+//#[serde(rename_all = "camelCase")]
+pub struct Rule {
+    //#[serde(rename = "type")]
     pub rule_type: RuleType,
+    // Use custom deserialization function for `Regex`
+    //#[serde(deserialize_with = "deserialize_regex")]
     pub is_inflected: Regex,
-    /// deinflect: (inflectedWord: string) => string;
-    pub deinflect: F,
-    pub conditions_in: Vec<&'a str>,
-    pub conditions_out: Vec<&'a str>,
+    pub deinflected: &'static str,
+    //#[serde(skip_deserializing, default = "arc_default")]
+    // #[debug("<deinflect_fn>")]
+    // pub deinflect: Arc<dyn DeinflectFnTrait>,
+    pub conditions_in: &'static [&'static str],
+    pub conditions_out: &'static [&'static str],
 }
 
 #[derive(Debug, Clone, Deserialize)]
