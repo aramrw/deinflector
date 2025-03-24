@@ -113,22 +113,62 @@ mod inflection_tests {
 
     use crate::{
         ja::ja_transforms::{irregular_verb_suffix_inflections, suffix_inflection},
-        transformer::{RuleType, SuffixRule, SuffixRuleDeinflectFnTrait},
+        transformer::{DeinflectFnType, RuleType, SuffixRule, SuffixRuleDeinflectFnTrait},
     };
 
-    //#[test]
-    // pub fn irregular_verb_suffix() {
-    //     #[rustfmt::skip]
-    //     let te_test = [SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("いって$").unwrap(), deinflected: "いく", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("行って$").unwrap(), deinflected: "行く", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("逝って$").unwrap(), deinflected: "逝く", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("往って$").unwrap(), deinflected: "往く", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("こうて$").unwrap(), deinflected: "こう", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("とうて$").unwrap(), deinflected: "とう", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("請うて$").unwrap(), deinflected: "請う", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("乞うて$").unwrap(), deinflected: "乞う", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("恋うて$").unwrap(), deinflected: "恋う", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("問うて$").unwrap(), deinflected: "問う", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("訪うて$").unwrap(), deinflected: "訪う", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("宣うて$").unwrap(), deinflected: "宣う", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("曰うて$").unwrap(), deinflected: "曰う", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("給うて$").unwrap(), deinflected: "給う", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("賜うて$").unwrap(), deinflected: "賜う", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("揺蕩うて$").unwrap(), deinflected: "揺蕩う", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("のたもうて$").unwrap(), deinflected: "のたまう", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("たもうて$").unwrap(), deinflected: "たまう", conditions_in: &["-て"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("たゆとうて$").unwrap(), deinflected: "たゆたう", conditions_in: &["-て"], conditions_out: &["v5"] }];
-    //     #[rustfmt::skip]
-    //     let ta_test = [SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("いった$").unwrap(), deinflected: "いく", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("行った$").unwrap(), deinflected: "行く", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("逝った$").unwrap(), deinflected: "逝く", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("往った$").unwrap(), deinflected: "往く", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("こうた$").unwrap(), deinflected: "こう", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("とうた$").unwrap(), deinflected: "とう", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("請うた$").unwrap(), deinflected: "請う", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("乞うた$").unwrap(), deinflected: "乞う", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("恋うた$").unwrap(), deinflected: "恋う", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("問うた$").unwrap(), deinflected: "問う", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("訪うた$").unwrap(), deinflected: "訪う", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("宣うた$").unwrap(), deinflected: "宣う", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("曰うた$").unwrap(), deinflected: "曰う", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("給うた$").unwrap(), deinflected: "給う", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("賜うた$").unwrap(), deinflected: "賜う", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("揺蕩うた$").unwrap(), deinflected: "揺蕩う", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("のたもうた$").unwrap(), deinflected: "のたまう", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("たもうた$").unwrap(), deinflected: "たまう", conditions_in: &["-た"], conditions_out: &["v5"] }, SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("たゆとうた$").unwrap(), deinflected: "たゆたう", conditions_in: &["-た"], conditions_out: &["v5"] }];
-    //     let て =
-    //         irregular_verb_suffix_inflections(super::IrregularVerbSuffix::て, &["-て"], &["v5"]);
-    //     assert_eq!(て, te_test);
-    //     let た =
-    //         irregular_verb_suffix_inflections(super::IrregularVerbSuffix::た, &["-た"], &["v5"]);
-    //     assert_eq!(た, ta_test);
-    // }
+    #[test]
+    pub fn irregular_verb_suffix() {
+        #[rustfmt::skip]
+    let te_test = [
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("いって$").unwrap(), deinflected: "いく", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("行って$").unwrap(), deinflected: "行く", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("逝って$").unwrap(), deinflected: "逝く", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("往って$").unwrap(), deinflected: "往く", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("こうて$").unwrap(), deinflected: "こう", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("とうて$").unwrap(), deinflected: "とう", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("請うて$").unwrap(), deinflected: "請う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("乞うて$").unwrap(), deinflected: "乞う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("恋うて$").unwrap(), deinflected: "恋う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("問うて$").unwrap(), deinflected: "問う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("訪うて$").unwrap(), deinflected: "訪う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("宣うて$").unwrap(), deinflected: "宣う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("曰うて$").unwrap(), deinflected: "曰う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("給うて$").unwrap(), deinflected: "給う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("賜うて$").unwrap(), deinflected: "賜う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("揺蕩うて$").unwrap(), deinflected: "揺蕩う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("のたもうて$").unwrap(), deinflected: "のたまう", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("たもうて$").unwrap(), deinflected: "たまう", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("たゆとうて$").unwrap(), deinflected: "たゆたう", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-て"], conditions_out: &["v5"] }
+    ];
+        #[rustfmt::skip]
+    let ta_test = [
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("いった$").unwrap(), deinflected: "いく", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("行った$").unwrap(), deinflected: "行く", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("逝った$").unwrap(), deinflected: "逝く", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("往った$").unwrap(), deinflected: "往く", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("こうた$").unwrap(), deinflected: "こう", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("とうた$").unwrap(), deinflected: "とう", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("請うた$").unwrap(), deinflected: "請う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("乞うた$").unwrap(), deinflected: "乞う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("恋うた$").unwrap(), deinflected: "恋う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("問うた$").unwrap(), deinflected: "問う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("訪うた$").unwrap(), deinflected: "訪う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("宣うた$").unwrap(), deinflected: "宣う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("曰うた$").unwrap(), deinflected: "曰う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("給うた$").unwrap(), deinflected: "給う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("賜うた$").unwrap(), deinflected: "賜う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("揺蕩うた$").unwrap(), deinflected: "揺蕩う", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("のたもうた$").unwrap(), deinflected: "のたまう", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("たもうた$").unwrap(), deinflected: "たまう", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] },
+        SuffixRule { rule_type: RuleType::Suffix, is_inflected: Regex::new("たゆとうた$").unwrap(), deinflected: "たゆたう", deinflect_fn: DeinflectFnType::GenericSuffix, conditions_in: &["-た"], conditions_out: &["v5"] }
+    ];
+        let て =
+            irregular_verb_suffix_inflections(super::IrregularVerbSuffix::て, &["-て"], &["v5"]);
+        assert_eq!(て, te_test);
+        let た =
+            irregular_verb_suffix_inflections(super::IrregularVerbSuffix::た, &["-た"], &["v5"]);
+        assert_eq!(た, ta_test);
+    }
 
     #[test]
     pub fn suffix() {
