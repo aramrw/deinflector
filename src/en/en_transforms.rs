@@ -1,9 +1,13 @@
-// use std::{collections::HashSet, sync::LazyLock};
+// use std::{
+//     collections::HashSet,
+//     sync::{Arc, LazyLock},
+// };
 //
 // use indexmap::IndexMap;
+// use regex::Regex;
 //
 // use crate::{
-//     transformer::{Condition, ConditionMap, RuleType, SuffixRule, Transform, TransformMap},
+//     transformer::{Condition, ConditionMap, Rule, RuleType, SuffixRule, Transform, TransformMap},
 //     transforms::{inflection, suffix_inflection},
 // };
 //
@@ -90,6 +94,55 @@
 //         .collect::<Vec<&str>>()
 //         .join("|")
 // });
+//
+//
+// fn create_phrasal_verb_inflection(
+//     inflected: &'static str,
+//     deinflected: &'static str,
+// ) -> Rule {
+//     let rgx = format!("^\\w{} (?:${})", inflected, &*PHRASAL_VERB_WORD_DISJUNCTION);
+//     let pat = format!(
+//         r"(?<=){}(?= (?:{}))",
+//         regex::escape(inflected),
+//         &*PHRASAL_VERB_WORD_DISJUNCTION
+//     );
+//     let deinflect = Arc::new(move |term: &str| {
+//         let re = Regex::new(&pat).unwrap();
+//         re.replace_all(term, deinflected).to_string()
+//     });
+//     Rule {
+//         rule_type: RuleType::Other,
+//         is_inflected: Regex::new(&rgx).unwrap(),
+//         deinflected: None,
+//         deinflect,
+//         conditions_in: &["v"],
+//         conditions_out: &["v_phr"],
+//     }
+// }
+//
+// fn create_phrasal_verb_inflections_from_suffix_inflections(
+//     source_rules: Vec<SuffixRule>,
+// ) -> Vec<Rule> {
+//     source_rules
+//         .into_iter()
+//         .flat_map(|sr| {
+//             // in js deinflected is checked with typeof === 'undefined'
+//             // assume that means an empty string
+//             if sr.deinflected.is_empty() {
+//                 vec![]
+//             } else {
+//                 // remove trailing '$' from is_inflected
+//                 let inflected_suffix = sr.is_inflected.as_str().replace('$', "").leak();
+//                 let deinflected_suffix = &sr.deinflected;
+//                 // create verb inflection based on suffixes
+//                 vec![create_phrasal_verb_inflection(
+//                     inflected_suffix,
+//                     deinflected_suffix,
+//                 )]
+//             }
+//         })
+//         .collect()
+// }
 //
 // static EN_CONDITIONS: LazyLock<ConditionMap> = LazyLock::new(|| {
 //     ConditionMap(IndexMap::from([
@@ -188,12 +241,12 @@
 //             Transform {
 //                 name: "past",
 //                 description: Some("Simple past tense of a verb"),
-//                 rules: vec![
-//                     past_suffix_inflections(),
+//                 rules: PAST_SUFFIX_INFLECTIONS.iter().chain(
 //                     create_phrasal_verb_inflections_from_suffix_inflections(
-//                         past_suffix_inflections(),
-//                     ),
-//                 ],
+//                         *PAST_SUFFIX_INFLECTIONS,
+//                     )
+//                     .iter(),
+//                 ),
 //                 i18n: None,
 //             },
 //         ),

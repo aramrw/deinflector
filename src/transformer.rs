@@ -1,4 +1,8 @@
-use std::sync::LazyLock;
+use std::{
+    clone,
+    fmt::Display,
+    sync::{Arc, LazyLock},
+};
 
 use derive_more::Debug;
 use indexmap::IndexMap;
@@ -31,14 +35,21 @@ pub struct InternalRule {
     pub rule_type: RuleType,
     pub is_inflected: Regex,
     pub deinflected: &'static str,
-    pub conditions_in: u32,
-    pub conditions_out: u32,
+    pub deinflect_fn: DeinflectFnType,
+    pub conditions_in: usize,
+    pub conditions_out: usize,
 }
 
-impl DeinflectFnTrait for InternalRule {
+impl SuffixRuleDeinflectFnTrait for InternalRule {
+    fn deinflect_fn_type(&self) -> DeinflectFnType {
+        self.deinflect_fn
+    }
     fn inflected(&self) -> &str {
-        let res = self.is_inflected.as_str().replace("$", "");
-        res.leak()
+        let str = self.is_inflected.as_str();
+        (match str.ends_with('$') {
+            true => &str[..str.len() - 1],
+            false => str,
+        }) as _
     }
     fn deinflected(&self) -> &str {
         self.deinflected
@@ -48,12 +59,16 @@ impl DeinflectFnTrait for InternalRule {
 #[derive(Debug, Clone, PartialEq)]
 pub struct TransformedText {
     pub text: String,
-    pub conditions: u32,
+    pub conditions: usize,
     pub trace: Trace,
 }
 
 impl TransformedText {
-    pub fn create_transformed_text(text: String, conditions: u32, trace: Trace) -> TransformedText {
+    pub fn create_transformed_text(
+        text: String,
+        conditions: usize,
+        trace: Trace,
+    ) -> TransformedText {
         TransformedText {
             text,
             conditions,
@@ -194,7 +209,8 @@ impl LanguageTransformer {
             } = transform;
             let mut rules2: Vec<InternalRule> = Vec::with_capacity(rules.len());
             for (j, rule) in rules.iter().enumerate() {
-                let SuffixRule {
+                let Rule {
+                    deinflect_fn,
                     rule_type,
                     is_inflected,
                     deinflected,
@@ -224,11 +240,12 @@ impl LanguageTransformer {
                 })?;
 
                 rules2.push(InternalRule {
+                    deinflect_fn,
                     rule_type,
                     is_inflected,
                     deinflected,
-                    conditions_in: condition_flags_in as u32,
-                    conditions_out: condition_flags_out as u32,
+                    conditions_in: condition_flags_in,
+                    conditions_out: condition_flags_out,
                 });
             }
 
@@ -344,7 +361,7 @@ impl LanguageTransformer {
                     };
                     let new_trace = self.extend_trace(trace.clone(), new_frame);
                     results.push(TransformedText::create_transformed_text(
-                        new_text,
+                        new_text.to_owned(),
                         rule.conditions_out,
                         new_trace,
                     ));
@@ -392,7 +409,7 @@ impl LanguageTransformer {
 
     /// If `currentConditions` is `0`, then `nextConditions` is ignored and `true` is returned.
     /// Otherwise, there must be at least one shared condition between `currentConditions` and `nextConditions`.
-    pub fn conditions_match(current_conditions: u32, next_conditions: u32) -> bool {
+    pub fn conditions_match(current_conditions: usize, next_conditions: usize) -> bool {
         current_conditions == 0 || (current_conditions & next_conditions) != 0
     }
 
@@ -451,6 +468,8 @@ impl LanguageTransformer {
         })
     }
 
+    /// Converts a Rule's condition flags into a single condition
+    /// &\[&str\] -> usize (for InternalRule's conditions)
     pub fn get_condition_flags_strict<'a>(
         condition_flags_map: &IndexMap<String, usize>,
         condition_types: &'a [&'a str],
@@ -539,10 +558,10 @@ enum DeserializeTransformMapError {
     Failed,
 }
 
-type TransformMapInner<T> = IndexMap<&'static str, Transform<T>>;
+type TransformMapInner = IndexMap<&'static str, Transform>;
 // Named `TransformMapObject` in yomitan.
 #[derive(Debug, Clone)]
-pub struct TransformMap(pub TransformMapInner<T>);
+pub struct TransformMap(pub TransformMapInner);
 
 // impl<'de> Deserialize<'de> for TransformMap {
 //     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -555,19 +574,19 @@ pub struct TransformMap(pub TransformMapInner<T>);
 //     }
 // }
 
-impl<T: DeinflectFnTrait> std::ops::Deref for TransformMap<T> {
-    type Target = TransformMapInner<T>;
+impl std::ops::Deref for TransformMap {
+    type Target = TransformMapInner;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Transform<T: DeinflectFnTrait> {
+pub struct Transform {
     pub name: &'static str,
     pub description: Option<&'static str>,
     pub i18n: Option<Vec<TransformI18n>>,
-    pub rules: Vec<T>,
+    pub rules: Vec<Rule>,
 }
 
 #[derive(Debug, Clone)]
@@ -581,10 +600,20 @@ pub struct TransformI18n {
 // Internal and Suffix Rule's will be used for multiple languages
 // this only allows this trait to be implemented one time for the structs
 // meaning you can only impl one language.
-pub trait DeinflectFnTrait {
+pub trait SuffixRuleDeinflectFnTrait: 'static {
+    fn deinflect_fn_type(&self) -> DeinflectFnType;
     fn inflected(&self) -> &str;
     fn deinflected(&self) -> &str;
     fn deinflect(&self, text: &str) -> String {
+        match self.deinflect_fn_type() {
+            DeinflectFnType::GenericSuffix => self.deinflect_generic_suffix(text),
+            _ => panic!(
+                "deinflect function has not been implemented yet for: {}",
+                self.deinflect_fn_type()
+            ),
+        }
+    }
+    fn deinflect_generic_suffix(&self, text: &str) -> String {
         // use character indices instead of byte indices
         let inflected_suffix = self.inflected();
         if let Some(base) = text.strip_suffix(inflected_suffix) {
@@ -595,11 +624,36 @@ pub trait DeinflectFnTrait {
         }
     }
 }
-// impl<F: Fn(String) -> String + Send + Sync + 'static> DeinflectFnTrait for F {}
-// pub type DeinflectFunction = Arc<dyn DeinflectFnTrait>;
 
 fn regex_default() -> Regex {
     Regex::new(r"\d").unwrap()
+}
+
+// fn deinflected(&self) -> String {
+//     // use character indices instead of byte indices
+//     let inflected_suffix = self.inflected();
+//     if let Some(base) = text.strip_suffix(inflected_suffix) {
+//         format!("{}{}", base, self.deinflected())
+//     } else {
+//         eprintln!("inflected: {inflected_suffix} didn't match anything in {text}");
+//         text.to_string() // or panic
+//     }
+// }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum DeinflectFnType {
+    GenericSuffix,
+    GenericPrefix,
+    GenericWholeWord,
+    Japanese,
+    English,
+    Yiddish,
+}
+
+impl Display for DeinflectFnType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -611,14 +665,18 @@ pub struct SuffixRule {
     //#[serde(deserialize_with = "deserialize_regex")]
     pub is_inflected: Regex,
     pub deinflected: &'static str,
+    pub deinflect_fn: DeinflectFnType,
     //#[serde(skip_deserializing, default = "arc_default")]
     // #[debug("<deinflect_fn>")]
-    // pub deinflect: Arc<dyn DeinflectFnTrait>,
+    // pub deinflect: DeinflectFn,
     pub conditions_in: &'static [&'static str],
     pub conditions_out: &'static [&'static str],
 }
 
-impl DeinflectFnTrait for SuffixRule {
+impl SuffixRuleDeinflectFnTrait for SuffixRule {
+    fn deinflect_fn_type(&self) -> DeinflectFnType {
+        self.deinflect_fn
+    }
     fn inflected(&self) -> &'static str {
         self.is_inflected.as_str().to_string().leak()
     }
@@ -632,30 +690,11 @@ impl PartialEq for SuffixRule {
         self.rule_type == other.rule_type
             && self.is_inflected.as_str() == other.is_inflected.as_str()
             && self.deinflected == other.deinflected
+            && self.deinflect_fn == other.deinflect_fn
             && self.conditions_in == other.conditions_in
             && self.conditions_out == other.conditions_out
     }
 }
-
-// fn arc_default() -> Arc<dyn DeinflectFnTrait> {
-//     std::sync::Arc::new(|_| "<unimplemented_deinflect_fn_trait>".into())
-// }
-
-// pub trait IntoDeref<'a> {
-//     fn into_deref(&'a self) -> Box<dyn Iterator<Item = &'a str> + 'a>;
-// }
-//
-// impl<'a> IntoDeref<'a> for Vec<String> {
-//     fn into_deref(&'a self) -> Box<dyn Iterator<Item = &'a str> + 'a> {
-//         Box::new(self.iter().map(|s| s.as_str()))
-//     }
-// }
-//
-// impl<'a> IntoDeref<'a> for &'a Vec<String> {
-//     fn into_deref(&'a self) -> Box<dyn Iterator<Item = &'a str> + 'a> {
-//         Box::new(self.iter().map(|s| s.as_str()))
-//     }
-// }
 
 /// Custom deserialization function for javascript Regex.
 ///
@@ -682,37 +721,65 @@ where
 
 #[cfg(test)]
 mod suffix_rule {
+    use std::sync::Arc;
+
     use super::{RuleType, SuffixRule};
     use regex::Regex;
 
-    #[test]
-    fn debug_display() {
-        let sr = SuffixRule {
-            rule_type: RuleType::Suffix,
-            is_inflected: Regex::new(r"\d").unwrap(),
-            deinflected: "食べる",
-            conditions_in: &[""],
-            conditions_out: &[""],
-        };
-        dbg!(sr);
-    }
+    //#[test]
+    // fn debug_display() {
+    //     let sr = SuffixRule {
+    //         rule_type: RuleType::Suffix,
+    //         is_inflected: Regex::new(r"\d").unwrap(),
+    //         deinflected: "食べる",
+    //         conditions_in: &[""],
+    //         conditions_out: &[""],
+    //     };
+    //     dbg!(sr);
+    // }
 }
+
+pub type DeinflectFn = Arc<dyn Fn(&str) -> String>;
 
 #[derive(Debug, Clone)]
 //#[serde(rename_all = "camelCase")]
 pub struct Rule {
-    //#[serde(rename = "type")]
     pub rule_type: RuleType,
-    // Use custom deserialization function for `Regex`
-    //#[serde(deserialize_with = "deserialize_regex")]
+    /// If evaluates true, will try to deinflect
     pub is_inflected: Regex,
+    // if type is SuffixRule will be Some,
     pub deinflected: &'static str,
-    //#[serde(skip_deserializing, default = "arc_default")]
     // #[debug("<deinflect_fn>")]
-    // pub deinflect: Arc<dyn DeinflectFnTrait>,
+    pub deinflect_fn: DeinflectFnType,
     pub conditions_in: &'static [&'static str],
     pub conditions_out: &'static [&'static str],
 }
+
+impl From<SuffixRule> for Rule {
+    fn from(suffix: SuffixRule) -> Self {
+        Self {
+            rule_type: suffix.rule_type,
+            is_inflected: suffix.is_inflected,
+            deinflected: suffix.deinflected,
+            deinflect_fn: suffix.deinflect_fn,
+            conditions_in: suffix.conditions_in,
+            conditions_out: suffix.conditions_out,
+        }
+    }
+}
+
+// impl From<Rule> for SuffixRule {
+//     fn from(x: Rule) -> Self {
+//         Self {
+//             rule_type: x.rule_type,
+//             is_inflected: x.is_inflected,
+//             deinflected: x.deinflected,
+//             deinflect_fn: x.deinflect_fn,
+//             conditions_in: x.conditions_in,
+//             conditions_out: x.conditions_out,
+//         }
+//     }
+// }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct RuleI18n {
