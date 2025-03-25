@@ -1,7 +1,5 @@
 use std::sync::LazyLock;
-
-use regex::Regex;
-
+use fancy_regex::Regex;
 use crate::{
     transformer::{
         Condition, ConditionMap, LanguageTransformer, Rule, RuleI18n, RuleType, SuffixRule,
@@ -32,9 +30,9 @@ pub(crate) struct TransformTest {
 }
 
 pub(crate) struct LanguageTransformerTestCase {
-    inner: &'static str,
-    rule: &'static str,
-    reasons: Vec<&'static str>,
+    pub(crate) inner: &'static str,
+    pub(crate) rule: &'static str,
+    pub(crate) reasons: Vec<&'static str>,
 }
 
 #[derive(Debug)]
@@ -109,7 +107,7 @@ pub fn irregular_verb_suffix_inflections(
 mod inflection_tests {
 
     use pretty_assertions::assert_eq;
-    use regex::Regex;
+    use fancy_regex::Regex;
 
     use crate::{
         ja::ja_transforms::{irregular_verb_suffix_inflections, suffix_inflection},
@@ -186,7 +184,7 @@ mod inflection_tests {
     }
 }
 
-pub(crate) static TRANSFORM_TESTS: LazyLock<[&TransformTest; 14]> = LazyLock::new(|| {
+pub(crate) static JP_TRANSFORM_TESTS: LazyLock<[&TransformTest; 14]> = LazyLock::new(|| {
     [
         &*JP_ADJ_TESTS,
         &*JP_ICHIDAN_VERB_TESTS,
@@ -1448,11 +1446,11 @@ pub(crate) const FU_VERB_TE_CONJUGATIONS: [[&str; 2]; 3] = [
   ["たゆたう", "たゆとう"]
 ];
 
-pub static JAPANESE_TRANSFORMS: LazyLock<LanguageTransformDescriptor> =
+pub static JAPANESE_TRANSFORMS_DESCRIPTOR: LazyLock<LanguageTransformDescriptor> =
     LazyLock::new(|| LanguageTransformDescriptor {
-        language: "ja".to_string(),
-        conditions: &JP_CONDITIONS,
-        transforms: &JP_TRANSFORMS,
+        language: "ja",
+        conditions: &JP_CONDITIONS_MAP,
+        transforms: &JP_TRANSFORMS_MAP,
     });
 
 #[cfg(test)]
@@ -1464,16 +1462,16 @@ pub(crate) mod jp_transforms {
 
     #[test]
     fn len() {
-        assert_eq!(JAPANESE_TRANSFORMS.transforms.len(), 53);
-        assert_eq!(JAPANESE_TRANSFORMS.conditions.len(), 22);
+        assert_eq!(JAPANESE_TRANSFORMS_DESCRIPTOR.transforms.len(), 53);
+        assert_eq!(JAPANESE_TRANSFORMS_DESCRIPTOR.conditions.len(), 22);
     }
 
     #[test]
     fn transforms() {
         let mut lt = LanguageTransformer::new();
-        lt.add_descriptor(&JAPANESE_TRANSFORMS).unwrap();
+        lt.add_descriptor(&JAPANESE_TRANSFORMS_DESCRIPTOR).unwrap();
 
-        for (i, test) in TRANSFORM_TESTS.iter().enumerate() {
+        for (i, test) in JP_TRANSFORM_TESTS.iter().enumerate() {
             let term = test.term;
             for case in &test.sources {
                 let source = case.inner;
@@ -1498,6 +1496,7 @@ pub(crate) fn has_term_reasons(
     expected_reasons: Option<&[&str]>,
 ) -> Result<HasTermReasons, HasTermReasonsError> {
     let results = lt.transform(source);
+    //dbg!(&results);
     let rule = expected_condition_name.unwrap_or("");
     let mut rejected = Vec::new();
 
@@ -1561,7 +1560,7 @@ pub(crate) fn has_term_reasons(
         // Success case
         return Ok(HasTermReasons {
             reasons: result.trace.iter().map(|f| f.transform.clone()).collect(),
-            rules: result.conditions as usize,
+            rules: result.conditions,
         });
     }
 
@@ -1574,7 +1573,7 @@ pub(crate) fn has_term_reasons(
     })
 }
 
-pub static JP_TRANSFORMS: LazyLock<TransformMap> = LazyLock::new(|| {
+pub static JP_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
     TransformMap(IndexMap::from([
         (
             "-ば",
@@ -3169,4 +3168,4 @@ pub static JP_TRANSFORMS: LazyLock<TransformMap> = LazyLock::new(|| {
 });
 
 #[rustfmt::skip]
-pub(crate) static JP_CONDITIONS: LazyLock<ConditionMap> = LazyLock::new(|| {    ConditionMap(IndexMap::from([            (                "v".to_string(),                Condition {                    name: "Verb".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "動詞".to_string(),                    }]),                    sub_conditions: Some(&[                        "v1",                        "v5",                        "vk",                        "vs",                        "vz",                    ]),                },            ),            (                "v1".to_string(),                Condition {                    name: "Ichidan verb".to_string(),                    is_dictionary_form: true,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "一段動詞".to_string(),                    }]),                    sub_conditions: Some(&["v1d", "v1p"]),                    },                ),            (                "v1d".to_string(),                Condition {                    name: "Ichidan verb, dictionary form".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "一段動詞、辞書形".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "v1p".to_string(),                Condition {                    name: "Ichidan verb, progressive or perfect form".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "一段動詞、～てる・でる".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "v5".to_string(),                Condition {                    name: "Godan verb".to_string(),                    is_dictionary_form: true,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "五段動詞".to_string(),                    }]),                    sub_conditions: Some(&["v5d", "v5s"]),                },            ),            (                "v5d".to_string(),                Condition {                    name: "Godan verb, dictionary form".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "五段動詞、終止形".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "v5s".to_string(),                Condition {                    name: "Godan verb, short causative form".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "五段動詞、～す・さす".to_string(),                    }]),                    sub_conditions: Some(&["v5ss", "v5sp"]),                },            ),            (                "v5ss".to_string(),                Condition {                    name: "Godan verb, short causative form having さす ending (cannot conjugate with passive form)".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "五段動詞、～さす".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "v5sp".to_string(),                Condition {                    name: "Godan verb, short causative form not having さす ending (can conjugate with passive form)".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "五段動詞、～す".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "vk".to_string(),                Condition {                    name: "Kuru verb".to_string(),                    is_dictionary_form: true,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "来る動詞".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "vs".to_string(),                Condition {                    name: "Suru verb".to_string(),                    is_dictionary_form: true,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "する動詞".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "vz".to_string(),                Condition {                    name: "Zuru verb".to_string(),                    is_dictionary_form: true,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "ずる動詞".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "adj-i".to_string(),                Condition {                    name: "Adjective with i ending".to_string(),                    is_dictionary_form: true,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "形容詞".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "-ます".to_string(),                Condition {                    name: "Polite -ます ending".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-ません".to_string(),                Condition {                    name: "Polite negative -ません ending".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-て".to_string(),                Condition {                    name: "Intermediate -て endings for progressive or perfect tense".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-ば".to_string(),                Condition {                    name: "Intermediate -ば endings for conditional contraction".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-く".to_string(),                Condition {                    name: "Intermediate -く endings for adverbs".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-た".to_string(),                Condition {                    name: "-た form ending".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-ん".to_string(),                Condition {                    name: "-ん negative ending".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-なさい".to_string(),                Condition {                    name: "Intermediate -なさい ending (polite imperative)".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-ゃ".to_string(),                Condition {                    name: "Intermediate -や ending (conditional contraction)".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),        ]))});
+pub(crate) static JP_CONDITIONS_MAP: LazyLock<ConditionMap> = LazyLock::new(|| {    ConditionMap(IndexMap::from([            (                "v".to_string(),                Condition {                    name: "Verb".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "動詞".to_string(),                    }]),                    sub_conditions: Some(&[                        "v1",                        "v5",                        "vk",                        "vs",                        "vz",                    ]),                },            ),            (                "v1".to_string(),                Condition {                    name: "Ichidan verb".to_string(),                    is_dictionary_form: true,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "一段動詞".to_string(),                    }]),                    sub_conditions: Some(&["v1d", "v1p"]),                    },                ),            (                "v1d".to_string(),                Condition {                    name: "Ichidan verb, dictionary form".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "一段動詞、辞書形".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "v1p".to_string(),                Condition {                    name: "Ichidan verb, progressive or perfect form".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "一段動詞、～てる・でる".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "v5".to_string(),                Condition {                    name: "Godan verb".to_string(),                    is_dictionary_form: true,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "五段動詞".to_string(),                    }]),                    sub_conditions: Some(&["v5d", "v5s"]),                },            ),            (                "v5d".to_string(),                Condition {                    name: "Godan verb, dictionary form".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "五段動詞、終止形".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "v5s".to_string(),                Condition {                    name: "Godan verb, short causative form".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "五段動詞、～す・さす".to_string(),                    }]),                    sub_conditions: Some(&["v5ss", "v5sp"]),                },            ),            (                "v5ss".to_string(),                Condition {                    name: "Godan verb, short causative form having さす ending (cannot conjugate with passive form)".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "五段動詞、～さす".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "v5sp".to_string(),                Condition {                    name: "Godan verb, short causative form not having さす ending (can conjugate with passive form)".to_string(),                    is_dictionary_form: false,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "五段動詞、～す".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "vk".to_string(),                Condition {                    name: "Kuru verb".to_string(),                    is_dictionary_form: true,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "来る動詞".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "vs".to_string(),                Condition {                    name: "Suru verb".to_string(),                    is_dictionary_form: true,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "する動詞".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "vz".to_string(),                Condition {                    name: "Zuru verb".to_string(),                    is_dictionary_form: true,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "ずる動詞".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "adj-i".to_string(),                Condition {                    name: "Adjective with i ending".to_string(),                    is_dictionary_form: true,                    i18n: Some(vec![RuleI18n {                        language: "ja".to_string(),                        name: "形容詞".to_string(),                    }]),                    sub_conditions: None,                },            ),            (                "-ます".to_string(),                Condition {                    name: "Polite -ます ending".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-ません".to_string(),                Condition {                    name: "Polite negative -ません ending".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-て".to_string(),                Condition {                    name: "Intermediate -て endings for progressive or perfect tense".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-ば".to_string(),                Condition {                    name: "Intermediate -ば endings for conditional contraction".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-く".to_string(),                Condition {                    name: "Intermediate -く endings for adverbs".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-た".to_string(),                Condition {                    name: "-た form ending".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-ん".to_string(),                Condition {                    name: "-ん negative ending".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-なさい".to_string(),                Condition {                    name: "Intermediate -なさい ending (polite imperative)".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),            (                "-ゃ".to_string(),                Condition {                    name: "Intermediate -や ending (conditional contraction)".to_string(),                    is_dictionary_form: false,                    i18n: None,                    sub_conditions: None,                },            ),        ]))});

@@ -5,8 +5,10 @@ use crate::{
     transformer::{InflectionRule, InflectionRuleChain, LanguageTransformer, TransformedText},
 };
 
+// key: language (ie: "en", "ja")
+// valueL LanguageTransformer
 pub(crate) struct MultiLanguageTransformer {
-    inner: HashMap<String, LanguageTransformer>,
+    inner: HashMap<&'static str, LanguageTransformer>,
 }
 
 impl MultiLanguageTransformer {

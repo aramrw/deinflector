@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::LazyLock};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-    ja::ja_transforms::JAPANESE_TRANSFORMS,
+    ja::ja_transforms::JAPANESE_TRANSFORMS_DESCRIPTOR,
     japanese::is_string_partially_japanese,
     language_d::{BidirectionalConversionPreProcessor, ReadingNormalizer, TextProcessor},
     text_preprocessors::{
@@ -88,7 +88,7 @@ pub static LANGUAGE_DESCRIPTORS_MAP: LazyLock<
                 },
                 post: None,
             },
-            language_transforms: Some(&*JAPANESE_TRANSFORMS),
+            language_transforms: Some(&*JAPANESE_TRANSFORMS_DESCRIPTOR),
         },
     )])
 });

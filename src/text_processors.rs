@@ -1,4 +1,4 @@
-use regex::Regex;
+use fancy_regex::Regex;
 use unicode_normalization::UnicodeNormalization;
 
 use crate::language_d::TextProcessor;
