@@ -115,7 +115,7 @@ pub static PHRASAL_VERB_INTERPOSED_OBJECT_RULE: LazyLock<Rule> = LazyLock::new(|
     conditions_out: &["v_phr"],
 });
 
-/// [`DeinflectFnType::EnglishPhrasalVerbInflection`]
+/// [`DeinflectFnType::EnCreatePhrasalVerbInflection`]
 fn create_phrasal_verb_inflection(inflected: &'static str, deinflected: &'static str) -> Rule {
     let rgx = format!("^\\w{} (?:${})", inflected, &*PHRASAL_VERB_WORD_DISJUNCTION);
     Rule {
@@ -234,7 +234,13 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
             Transform {
                 name: "plural",
                 description: Some("Plural form of a noun"),
-                rules: vec![suffix_inflection("s", "", &["np"], &["ns"]).into()],
+                rules: vec![
+                    suffix_inflection("s", "", &["np"], &["ns"]).into(),
+                    suffix_inflection("es", "", &["np"], &["ns"]).into(),
+                    suffix_inflection("ies", "y", &["np"], &["ns"]).into(),
+                    suffix_inflection("ves", "fe", &["np"], &["ns"]).into(),
+                    suffix_inflection("ves", "f", &["np"], &["ns"]).into(),
+                ],
                 i18n: None,
             },
         ),
@@ -250,7 +256,6 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
-        // Past tense
         (
             "past",
             Transform {
@@ -264,11 +269,9 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                         &PAST_SUFFIX_INFLECTIONS,
                     ))
                     .collect(),
-
                 i18n: None,
             },
         ),
-        // Present participle
         (
             "ing",
             Transform {
@@ -285,7 +288,6 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
-        // Third person singular present
         (
             "3rd pers. sing. pres",
             Transform {
@@ -302,7 +304,6 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
-        // Interposed object
         (
             "interposed object",
             Transform {
@@ -312,7 +313,6 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
-        // Archaic form
         (
             "archaic",
             Transform {
@@ -322,21 +322,19 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
-        // Adverb form
         (
             "adverb",
             Transform {
                 name: "adverb",
                 description: Some("Adverb form of an adjective"),
                 rules: vec![
-                    suffix_inflection("ly", "", &["adv"], &["adj"]).into(), // 'quickly'
-                    suffix_inflection("ily", "y", &["adv"], &["adj"]).into(), // 'happily'
-                    suffix_inflection("ly", "le", &["adv"], &["adj"]).into(), // 'humbly'
+                    suffix_inflection("ly", "", &["adv"], &["adj"]).into(),
+                    suffix_inflection("ily", "y", &["adv"], &["adj"]).into(),
+                    suffix_inflection("ly", "le", &["adv"], &["adj"]).into(),
                 ],
                 i18n: None,
             },
         ),
-        // Comparative form
         (
             "comparative",
             Transform {
@@ -344,9 +342,9 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 description: Some("Comparative form of an adjective"),
                 i18n: None,
                 rules: vec![
-                    suffix_inflection("er", "", &["adj"], &["adj"]).into(), // 'faster'
-                    suffix_inflection("er", "e", &["adj"], &["adj"]).into(), // 'nicer'
-                    suffix_inflection("ier", "y", &["adj"], &["adj"]).into(), // 'happier'
+                    suffix_inflection("er", "", &["adj"], &["adj"]).into(),
+                    suffix_inflection("er", "e", &["adj"], &["adj"]).into(),
+                    suffix_inflection("ier", "y", &["adj"], &["adj"]).into(),
                 ]
                 .into_iter()
                 .chain(
@@ -357,16 +355,15 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 .collect(),
             },
         ),
-        // Superlative form
         (
             "superlative",
             Transform {
                 name: "superlative",
                 description: Some("Superlative form of an adjective"),
                 rules: vec![
-                    suffix_inflection("est", "", &["adj"], &["adj"]).into(), // 'fastest'
-                    suffix_inflection("est", "e", &["adj"], &["adj"]).into(), // 'nicest'
-                    suffix_inflection("iest", "y", &["adj"], &["adj"]).into(), // 'happiest
+                    suffix_inflection("est", "", &["adj"], &["adj"]).into(),
+                    suffix_inflection("est", "e", &["adj"], &["adj"]).into(),
+                    suffix_inflection("iest", "y", &["adj"], &["adj"]).into(),
                 ]
                 .into_iter()
                 .chain(
@@ -378,7 +375,6 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
-        // Dropped g
         (
             "dropped g",
             Transform {
@@ -388,15 +384,14 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
-        // -y form
         (
             "-y",
             Transform {
                 name: "-y",
                 description: Some("Adjective formed from a verb or noun"),
                 rules: vec![
-                    suffix_inflection("y", "", &["adj"], &["n", "v"]).into(), // 'dirty', 'pushy'
-                    suffix_inflection("y", "e", &["adj"], &["n", "v"]).into(), // 'hazy'
+                    suffix_inflection("y", "", &["adj"], &["n", "v"]).into(),
+                    suffix_inflection("y", "e", &["adj"], &["n", "v"]).into(),
                 ]
                 .into_iter()
                 .chain(
@@ -408,7 +403,6 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
-        // un- prefix
         (
             "un-",
             Transform {
@@ -424,7 +418,6 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
-        // going-to future
         (
             "going-to future",
             Transform {
@@ -440,7 +433,6 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
-        // will future
         (
             "will future",
             Transform {
@@ -450,7 +442,6 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
-        // imperative negative
         (
             "imperative negative",
             Transform {
@@ -463,7 +454,6 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
-        // -able suffix
         (
             "-able",
             Transform {
@@ -488,7 +478,38 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
 });
 
 pub(crate) static EN_TRANSFORM_TESTS: LazyLock<[&TransformTest; 1]> =
-    LazyLock::new(|| [&EN_ADJ_TESTS]);
+    LazyLock::new(|| [&EN_VERB_TESTS]);
+
+pub(crate) static EN_VERB_TESTS: LazyLock<TransformTest> = LazyLock::new(|| TransformTest {
+    term: "walk",
+    sources: vec![
+        LanguageTransformerTestCase {
+            inner: "walked",
+            rule: "v",
+            reasons: vec!["past"],
+        },
+        // LanguageTransformerTestCase {
+        //     inner: "going to walk",
+        //     rule: "v",
+        //     reasons: vec!["going-to future"],
+        // },
+        // LanguageTransformerTestCase {
+        //     inner: "will walk",
+        //     rule: "v",
+        //     reasons: vec!["imperative negative"],
+        // },
+        // LanguageTransformerTestCase {
+        //     inner: "don't walk",
+        //     rule: "v",
+        //     reasons: vec!["imperative negative"],
+        // },
+        // LanguageTransformerTestCase {
+        //     inner: "do not walk",
+        //     rule: "v",
+        //     reasons: vec!["imperative negative"],
+        // },
+    ],
+});
 
 pub(crate) static EN_ADJ_TESTS: LazyLock<TransformTest> = LazyLock::new(|| TransformTest {
     term: "funny",
