@@ -4,6 +4,7 @@ use std::{
     sync::{Arc, LazyLock},
 };
 
+use derivative::Derivative;
 use derive_more::Debug;
 use fancy_regex::Regex;
 use indexmap::IndexMap;
@@ -41,7 +42,7 @@ pub struct InternalRule {
     pub conditions_out: usize,
 }
 
-impl SuffixRuleDeinflectFnTrait for InternalRule {
+impl RuleDeinflectFnTrait for InternalRule {
     fn deinflect_fn_type(&self) -> DeinflectFnType {
         self.deinflect_fn
     }
@@ -612,7 +613,7 @@ impl Display for DeinflectFnType {
     }
 }
 
-pub trait SuffixRuleDeinflectFnTrait: 'static {
+pub trait RuleDeinflectFnTrait: 'static {
     fn deinflect_fn_type(&self) -> DeinflectFnType;
     fn inflected(&self) -> &str;
     fn deinflected(&self) -> &str;
@@ -621,7 +622,7 @@ pub trait SuffixRuleDeinflectFnTrait: 'static {
             DeinflectFnType::GenericSuffix => self.deinflect_generic_suffix(text),
             DeinflectFnType::GenericPrefix => self.deinflect_generic_prefix(text),
             DeinflectFnType::EnCreatePhrasalVerbInflection => {
-                self.english_phrasal_verb_inflection_deinflect(text)
+                self.english_create_phrasal_verb_inflection_deinflect(text)
             }
             DeinflectFnType::EnPhrasalVerbInterposedObjectRule => {
                 self.english_create_phrasal_verb_interposed_object_rule(text)
@@ -651,9 +652,9 @@ pub trait SuffixRuleDeinflectFnTrait: 'static {
         format!("{deinflected_prefix}{slice}")
     }
     /// [`DeinflectFnType::EnCreatePhrasalVerbInflection`]
-    fn english_phrasal_verb_inflection_deinflect(&self, text: &str) -> String {
-        let inflected = self.deinflected();
-        let deinflected = self.inflected();
+    fn english_create_phrasal_verb_inflection_deinflect(&self, text: &str) -> String {
+        let inflected = self.inflected();
+        let deinflected = self.deinflected();
         let pattern = format!(
             r"{}(?= (?:{}))",
             fancy_regex::escape(inflected),
@@ -662,8 +663,9 @@ pub trait SuffixRuleDeinflectFnTrait: 'static {
         let re = Regex::new(&pattern).unwrap();
         re.replace(text, deinflected).to_string()
     }
+
     /// [`DeinflectFnType::EnPhrasalVerbInterposedObjectRule`]
-    /// .deinflect()/.inflected() is not necessary for this fn 
+    /// .deinflect()/.inflected() is not necessary for this fn
     fn english_create_phrasal_verb_interposed_object_rule(&self, term: &str) -> String {
         let pattern = format!(
             r"(?<=\w) (?:(?!\b({})\b).)+ (?=(?:{}))",
@@ -706,7 +708,7 @@ pub struct SuffixRule {
     pub conditions_out: &'static [&'static str],
 }
 
-impl SuffixRuleDeinflectFnTrait for SuffixRule {
+impl RuleDeinflectFnTrait for SuffixRule {
     fn deinflect_fn_type(&self) -> DeinflectFnType {
         self.deinflect_fn
     }
@@ -774,18 +776,38 @@ mod suffix_rule {
 
 pub type DeinflectFn = Arc<dyn Fn(&str) -> String>;
 
-#[derive(Debug, Clone)]
-//#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Derivative)]
+#[derivative(PartialEq)]
 pub struct Rule {
     pub rule_type: RuleType,
     /// If evaluates true, will try to deinflect
+    //#[derivative(PartialEq = "ignore")]
+    #[derivative(PartialEq(compare_with = "partial_eq_regex"))]
     pub is_inflected: Regex,
     // if type is SuffixRule will be Some,
     pub deinflected: Option<&'static str>,
-    // #[debug("<deinflect_fn>")]
     pub deinflect_fn: DeinflectFnType,
     pub conditions_in: &'static [&'static str],
     pub conditions_out: &'static [&'static str],
+}
+
+fn partial_eq_regex(x: &Regex, y: &Regex) -> bool {
+    let xstr = x.as_str();
+    let ystr = y.as_str();
+    xstr == ystr
+}
+
+impl RuleDeinflectFnTrait for Rule {
+    fn deinflect_fn_type(&self) -> DeinflectFnType {
+        self.deinflect_fn
+    }
+    fn inflected(&self) -> &'static str {
+        self.is_inflected.as_str().to_string().leak()
+    }
+    fn deinflected(&self) -> &'static str {
+        self.deinflected
+            .expect("deinflected cannot be called on a Rule, this might expect a SuffixRule")
+    }
 }
 
 impl From<SuffixRule> for Rule {
@@ -801,18 +823,20 @@ impl From<SuffixRule> for Rule {
     }
 }
 
-// impl From<Rule> for SuffixRule {
-//     fn from(x: Rule) -> Self {
-//         Self {
-//             rule_type: x.rule_type,
-//             is_inflected: x.is_inflected,
-//             deinflected: x.deinflected,
-//             deinflect_fn: x.deinflect_fn,
-//             conditions_in: x.conditions_in,
-//             conditions_out: x.conditions_out,
-//         }
-//     }
-// }
+impl From<Rule> for SuffixRule {
+    fn from(x: Rule) -> Self {
+        Self {
+            rule_type: x.rule_type,
+            is_inflected: x.is_inflected,
+            deinflected: x
+                .deinflected
+                .expect("deinflected is none; \nyou cannot convert a rule into a suffix unless its garunteed"),
+            deinflect_fn: x.deinflect_fn,
+            conditions_in: x.conditions_in,
+            conditions_out: x.conditions_out,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct RuleI18n {
@@ -820,7 +844,7 @@ pub struct RuleI18n {
     pub name: String,
 }
 
-#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "camelCase")]
 pub enum RuleType {
     Suffix,
