@@ -15,11 +15,21 @@ use crate::{
     transforms::inflection,
 };
 
-fn doubled_consonant_inflection(
-    consonants: &'static str,
-    suffix: &'static str,
-    conditions_in: &'static [&'static str],
-    conditions_out: &'static [&'static str],
+/// Produces an iterator of [`SuffixRule`] from the `suffix` parameter
+/// #\[test\]: double_consonant_inflection()
+///
+/// # Example
+/// ```
+/// use super::*;
+/// // output shortened for brevity:
+/// // [("bbing$", "b"), ("dding$", "b"), ("gging$", "g"), ("kking$", "k")] 
+/// doubled_consonant_inflection("bdgk", "ing", &["v"], &["v"])
+/// ```
+fn doubled_consonant_inflection<'a: 'static>(
+    consonants: &'a str,
+    suffix: &'a str,
+    conditions_in: &'a [&'a str],
+    conditions_out: &'a [&'a str],
 ) -> Vec<SuffixRule> {
     let fmt = |csn: &char| format!("{csn}{csn}{suffix}");
     let inflections: Vec<SuffixRule> = consonants
@@ -37,6 +47,113 @@ fn doubled_consonant_inflection(
         })
         .collect();
     inflections
+}
+
+#[test]
+fn double_consonant_inflection() {
+    use pretty_assertions::assert_eq as passert_eq;
+    let expected: &[Rule] = &[
+        Rule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("bbing$").unwrap(),
+            deinflected: Some("b"),
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &[""],
+            conditions_out: &["v"],
+        },
+        Rule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("dding$").unwrap(),
+            deinflected: Some("d"),
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        Rule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("gging$").unwrap(),
+            deinflected: Some("g"),
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        Rule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("kking$").unwrap(),
+            deinflected: Some("k"),
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        Rule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("lling$").unwrap(),
+            deinflected: Some("l"),
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        Rule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("mming$").unwrap(),
+            deinflected: Some("m"),
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        Rule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("nning$").unwrap(),
+            deinflected: Some("n"),
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        Rule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("pping$").unwrap(),
+            deinflected: Some("p"),
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        Rule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("rring$").unwrap(),
+            deinflected: Some("r"),
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        Rule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("ssing$").unwrap(),
+            deinflected: Some("s"),
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        Rule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("tting$").unwrap(),
+            deinflected: Some("t"),
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        Rule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("zzing$").unwrap(),
+            deinflected: Some("z"),
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+    ];
+    let result: Vec<Rule> = doubled_consonant_inflection("bdgklmnprstz", "ing", &["v"], &["v"])
+        .into_iter()
+        .map(|sr| sr.into()).collect();
+    passert_eq!(result, expected);
 }
 
 pub static PAST_SUFFIX_INFLECTIONS: LazyLock<Vec<SuffixRule>> = LazyLock::new(|| {

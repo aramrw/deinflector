@@ -770,7 +770,7 @@ pub struct Rule {
     pub rule_type: RuleType,
     /// If evaluates true, will try to deinflect
     //#[derivative(PartialEq = "ignore")]
-    #[derivative(PartialEq(compare_with = "partial_eq_regex"))]
+    #[derivative(PartialEq(compare_with = "partialeq_regex"))]
     pub is_inflected: Regex,
     // if type is SuffixRule will be Some,
     pub deinflected: Option<&'static str>,
@@ -779,7 +779,18 @@ pub struct Rule {
     pub conditions_out: &'static [&'static str],
 }
 
-fn partial_eq_regex(x: &Regex, y: &Regex) -> bool {
+/// Compares the original &str of two regexp then cmp
+/// Used with [`Derivative`]
+///
+/// # Example
+///
+/// ```
+/// struct Foo {
+///     #[derivative(PartialEq(compare_with = "partialeq_regex"))]
+///     regexp: Regex,
+/// }
+/// ```
+pub fn partialeq_regex(x: &Regex, y: &Regex) -> bool {
     let xstr = x.as_str();
     let ystr = y.as_str();
     xstr == ystr
