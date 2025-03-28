@@ -36,7 +36,7 @@ pub struct InternalTransform {
 pub struct InternalRule {
     pub rule_type: RuleType,
     pub is_inflected: Regex,
-    pub deinflected: Option<&'static str>,
+    pub deinflected: &'static str,
     pub deinflect_fn: DeinflectFnType,
     pub conditions_in: usize,
     pub conditions_out: usize,
@@ -55,7 +55,7 @@ impl RuleDeinflectFnTrait for InternalRule {
     }
     fn deinflected(&self) -> &str {
         self.deinflected
-            .expect("got no deinflected str when expected")
+        //.expect("got no deinflected str when expected")
     }
 }
 
@@ -86,7 +86,7 @@ pub type Trace = Vec<TraceFrame>;
 pub struct TraceFrame {
     pub text: String,
     pub transform: String,
-    pub rule_index: u32,
+    pub rule_index: usize,
 }
 
 pub type ConditionTypeToConditionFlagsMap = HashMap<String, u32>;
@@ -131,7 +131,7 @@ pub enum LanguageTransformerError {
     #[snafu(display("Failed to get conditions_flag_map: {e}"))]
     ConditionsFlagMap { e: String },
     #[snafu(display(
-        "Cycle detected in transform[{}] rule[{j}] for text: {text}\nTrace: {trace:?}"
+        "Cycle detected in transform[{transform_name}] rule[{j}] for text: {text}\nTrace: {trace:?}"
     ))]
     CycleDetected {
         transform_name: String,
@@ -229,9 +229,6 @@ impl LanguageTransformer {
                     transform_id: transform_id.to_string(),
                 })?;
 
-                // this doesnt match js.
-                // find out what is passed in
-                // and find the output to compare
                 let condition_flags_out = LanguageTransformer::get_condition_flags_strict(
                     &condition_flags_map.map,
                     conditions_out,
@@ -245,7 +242,7 @@ impl LanguageTransformer {
                     deinflect_fn,
                     rule_type,
                     is_inflected,
-                    deinflected,
+                    deinflected: deinflected.unwrap_or(""),
                     conditions_in: condition_flags_in,
                     conditions_out: condition_flags_out,
                 });
@@ -323,7 +320,6 @@ impl LanguageTransformer {
 
         let mut i = 0;
         while i < results.len() {
-            // Isolate the borrow scope using a block
             let (text, conditions, trace) = {
                 let entry = &results[i];
                 (entry.text.clone(), entry.conditions, entry.trace.clone())
@@ -345,20 +341,23 @@ impl LanguageTransformer {
                     // Cycle detection
                     if trace.iter().any(|frame| {
                         frame.transform == transform_id
-                            && frame.rule_index == j as u32
+                            && frame.rule_index == j
                             && frame.text == text
                     }) {
-                        eprintln!(
-                            "Cycle detected in transform[{}] rule[{}] for text: {}\nTrace: {:?}",
-                            transform.name, j, text, trace
-                        );
+                        let e = LanguageTransformerError::CycleDetected {
+                            transform_name: transform.name.clone(),
+                            j,
+                            text: text.clone(),
+                            trace: trace.clone(),
+                        };
+                        eprintln!("{e}");
                         continue;
                     }
 
                     let new_text = rule.deinflect(&text);
                     let new_frame = TraceFrame {
                         transform: transform_id.clone(),
-                        rule_index: j as u32,
+                        rule_index: j,
                         text: text.clone(),
                     };
                     let new_trace = self.extend_trace(trace.clone(), new_frame);
@@ -598,6 +597,7 @@ pub struct TransformI18n {
     pub description: Option<&'static str>,
 }
 
+/// Holds every deinflect variant
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum DeinflectFnType {
     GenericSuffix,
@@ -606,13 +606,16 @@ pub enum DeinflectFnType {
     EnCreatePhrasalVerbInflection,
     EnPhrasalVerbInterposedObjectRule,
 }
-
 impl Display for DeinflectFnType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self:?}")
     }
 }
 
+/// Trait for Rule's to deinflect text
+/// Provides `deinflect(&self, &str)` trait method
+/// Matches on [`DeinflectFnType`]
+/// Used in [`LanguageTransformer`]'s `.transform()` method
 pub trait RuleDeinflectFnTrait: 'static {
     fn deinflect_fn_type(&self) -> DeinflectFnType;
     fn inflected(&self) -> &str;
@@ -625,10 +628,10 @@ pub trait RuleDeinflectFnTrait: 'static {
                 self.english_create_phrasal_verb_inflection_deinflect(text)
             }
             DeinflectFnType::EnPhrasalVerbInterposedObjectRule => {
-                self.english_create_phrasal_verb_interposed_object_rule(text)
+                Self::english_create_phrasal_verb_interposed_object_rule(text)
             }
             _ => panic!(
-                "deinflect function has not been implemented yet for: {}",
+                "failed to call `.deinflect(${text})` because deinflect function has not been implemented yet for: {}",
                 self.deinflect_fn_type()
             ),
         }
@@ -656,7 +659,7 @@ pub trait RuleDeinflectFnTrait: 'static {
         let inflected = self.inflected();
         let deinflected = self.deinflected();
         let pattern = format!(
-            r"{}(?= (?:{}))",
+            r"(?<=){}(?= (?:{}))",
             fancy_regex::escape(inflected),
             &*PHRASAL_VERB_WORD_DISJUNCTION
         );
@@ -665,8 +668,8 @@ pub trait RuleDeinflectFnTrait: 'static {
     }
 
     /// [`DeinflectFnType::EnPhrasalVerbInterposedObjectRule`]
-    /// .deinflect()/.inflected() is not necessary for this fn
-    fn english_create_phrasal_verb_interposed_object_rule(&self, term: &str) -> String {
+    /// `self` is not necessary for this fn
+    fn english_create_phrasal_verb_interposed_object_rule(term: &str) -> String {
         let pattern = format!(
             r"(?<=\w) (?:(?!\b({})\b).)+ (?=(?:{}))",
             &*PHRASAL_VERB_WORD_DISJUNCTION, &*PARTICLES_DISJUNCTION
@@ -680,19 +683,7 @@ fn regex_default() -> Regex {
     Regex::new(r"\d").unwrap()
 }
 
-// fn deinflected(&self) -> String {
-//     // use character indices instead of byte indices
-//     let inflected_suffix = self.inflected();
-//     if let Some(base) = text.strip_suffix(inflected_suffix) {
-//         format!("{}{}", base, self.deinflected())
-//     } else {
-//         eprintln!("inflected: {inflected_suffix} didn't match anything in {text}");
-//         text.to_string() // or panic
-//     }
-// }
-
 #[derive(Debug, Clone)]
-//#[serde(rename_all = "camelCase")]
 pub struct SuffixRule {
     //#[serde(rename = "type")]
     pub rule_type: RuleType,
@@ -701,9 +692,6 @@ pub struct SuffixRule {
     pub is_inflected: fancy_regex::Regex,
     pub deinflected: &'static str,
     pub deinflect_fn: DeinflectFnType,
-    //#[serde(skip_deserializing, default = "arc_default")]
-    // #[debug("<deinflect_fn>")]
-    // pub deinflect: DeinflectFn,
     pub conditions_in: &'static [&'static str],
     pub conditions_out: &'static [&'static str],
 }
@@ -806,7 +794,7 @@ impl RuleDeinflectFnTrait for Rule {
     }
     fn deinflected(&self) -> &'static str {
         self.deinflected
-            .expect("deinflected cannot be called on a Rule, this might expect a SuffixRule")
+            .expect("<self.deinflected: &str> cannot be called on a Rule, you might have meant to pass a SuffixRule")
     }
 }
 
@@ -828,9 +816,7 @@ impl From<Rule> for SuffixRule {
         Self {
             rule_type: x.rule_type,
             is_inflected: x.is_inflected,
-            deinflected: x
-                .deinflected
-                .expect("deinflected is none; \nyou cannot convert a rule into a suffix unless its garunteed"),
+            deinflected: x.deinflected.unwrap_or(""),
             deinflect_fn: x.deinflect_fn,
             conditions_in: x.conditions_in,
             conditions_out: x.conditions_out,

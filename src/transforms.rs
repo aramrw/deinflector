@@ -1,6 +1,6 @@
-use std::sync::Arc;
-use fancy_regex::Regex;
 use crate::transformer::{DeinflectFnType, Rule, RuleType, SuffixRule};
+use fancy_regex::Regex;
+use std::sync::Arc;
 
 pub fn inflection(
     inflected: &str,
@@ -26,10 +26,15 @@ pub fn inflection(
         ),
     };
     let is_inflected = Regex::new(&regx).unwrap();
+    let deinflected = if deinflected.is_empty() {
+        None
+    } else {
+        Some(deinflected)
+    };
     Rule {
         rule_type,
         is_inflected,
-        deinflected: Some(deinflected),
+        deinflected,
         deinflect_fn,
         conditions_in,
         conditions_out,
