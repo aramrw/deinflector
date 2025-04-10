@@ -11,6 +11,7 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer, Serialize};
 use snafu::ResultExt;
 use std::collections::HashMap;
+use strace::{dbug, pt};
 
 use crate::{
     descriptors::{JapanesePreProcessors, LanguageDescriptor, PreAndPostProcessors},
@@ -25,11 +26,11 @@ use crate::{
 };
 #[derive(Debug, Clone)]
 pub struct InternalTransform {
-    pub id: String,
-    pub name: String,
+    pub id: &'static str,
+    pub name: &'static str,
     pub rules: Vec<InternalRule>,
     pub heuristic: Regex,
-    pub description: Option<String>,
+    pub description: Option<&'static str>,
 }
 
 #[derive(Debug, Clone)]
@@ -67,12 +68,8 @@ pub struct TransformedText {
 }
 
 impl TransformedText {
-    pub fn create_transformed_text(
-        text: String,
-        conditions: usize,
-        trace: Trace,
-    ) -> TransformedText {
-        TransformedText {
+    pub fn create_transformed_text(text: String, conditions: usize, trace: Trace) -> Self {
+        Self {
             text,
             conditions,
             trace,
@@ -115,14 +112,14 @@ pub type InflectionRuleChain = Vec<InflectionRule>;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct InflectionRule {
-    pub name: String,
-    pub description: Option<String>,
+    pub name: &'static str,
+    pub description: Option<&'static str>,
 }
 
 /// Errors for [`LanguageTransformer`].
 #[derive(snafu::Snafu, Debug)]
 pub enum LanguageTransformerError {
-    #[snafu(display("Invalid for transform: {transform_id}.rules[{index}]"))]
+    #[snafu(display("invalid transform conditions: {transform_id}.rules[{index}]"))]
     InvalidConditions {
         source: ConditionError,
         transform_id: String,
@@ -131,7 +128,7 @@ pub enum LanguageTransformerError {
     #[snafu(display("Failed to get conditions_flag_map: {e}"))]
     ConditionsFlagMap { e: String },
     #[snafu(display(
-        "Cycle detected in transform[{transform_name}] rule[{j}] for text: {text}\nTrace: {trace:?}"
+        "[cycle detected]\n  transform: [{transform_name}] rule[{j}]\n  text: {text}\n  trace: {trace:?}"
     ))]
     CycleDetected {
         transform_name: String,
@@ -262,9 +259,9 @@ impl LanguageTransformer {
             // compile the combined pattern into a new Regex
             let heuristic = Regex::new(&combined_pattern).unwrap();
             transforms2.push(InternalTransform {
-                id: transform_id.to_string(),
-                name: name.to_string(),
-                description: description.map(|s| s.to_string()),
+                id: transform_id,
+                name,
+                description: *description,
                 rules: rules2,
                 heuristic,
             });
@@ -330,7 +327,7 @@ impl LanguageTransformer {
                     continue;
                 }
 
-                let transform_id = transform.id.clone();
+                let transform_id = transform.id;
                 for (j, rule) in transform.rules.iter().enumerate() {
                     if !Self::conditions_match(conditions, rule.conditions_in)
                         || !rule.is_inflected.is_match(&text).unwrap()
@@ -345,18 +342,18 @@ impl LanguageTransformer {
                             && frame.text == text
                     }) {
                         let e = LanguageTransformerError::CycleDetected {
-                            transform_name: transform.name.clone(),
+                            transform_name: transform.name.into(),
                             j,
                             text: text.clone(),
                             trace: trace.clone(),
                         };
-                        eprintln!("{e}");
+                        pt!("error", "{}", e);
                         continue;
                     }
 
                     let new_text = rule.deinflect(&text);
                     let new_frame = TraceFrame {
-                        transform: transform_id.clone(),
+                        transform: transform_id.into(),
                         rule_index: j,
                         text: text.clone(),
                     };
@@ -385,7 +382,7 @@ impl LanguageTransformer {
 
     pub fn get_user_facing_inflection_rules(
         &self,
-        inflection_rules: &[&str],
+        inflection_rules: &[&'static str],
     ) -> InflectionRuleChain {
         inflection_rules
             .iter()
@@ -396,12 +393,12 @@ impl LanguageTransformer {
                     .find(|transform| transform.id == *rule);
                 if let Some(full_rule) = full_rule {
                     return InflectionRule {
-                        name: full_rule.name.clone(),
-                        description: full_rule.description.clone(),
+                        name: full_rule.name,
+                        description: full_rule.description,
                     };
                 }
                 InflectionRule {
-                    name: rule.to_string(),
+                    name: rule,
                     description: None,
                 }
             })
@@ -510,10 +507,10 @@ impl LanguageTransformer {
 
 /// Named [ConditionMapObject](https://github.com/yomidevs/yomitan/blob/37d13a8a1abc15f4e91cef5bfdc1623096855bb0/types/ext/language-transformer.d.ts#L24) in yomitan.
 #[derive(Debug, Clone)]
-pub struct ConditionMap(pub IndexMap<String, Condition>);
+pub struct ConditionMap(pub IndexMap<&'static str, Condition>);
 
 impl std::ops::Deref for ConditionMap {
-    type Target = IndexMap<String, Condition>;
+    type Target = IndexMap<&'static str, Condition>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -547,7 +544,7 @@ pub struct ConditionFlagsMap {
 #[derive(Debug, Clone)]
 //#[serde(rename_all = "camelCase")]
 pub struct Condition {
-    pub name: String,
+    pub name: &'static str,
     pub is_dictionary_form: bool,
     pub i18n: Option<Vec<RuleI18n>>,
     pub sub_conditions: Option<&'static [&'static str]>,
@@ -614,12 +611,12 @@ impl Display for DeinflectFnType {
 
 /// Trait for Rule's to deinflect text
 /// Provides `deinflect(&self, &str)` trait method
-/// Matches on [`DeinflectFnType`]
 /// Used in [`LanguageTransformer`]'s `.transform()` method
 pub trait RuleDeinflectFnTrait: 'static {
     fn deinflect_fn_type(&self) -> DeinflectFnType;
     fn inflected(&self) -> &str;
     fn deinflected(&self) -> &str;
+    /// Matches on [`DeinflectFnType`]
     fn deinflect(&self, text: &str) -> String {
         match self.deinflect_fn_type() {
             DeinflectFnType::GenericSuffix => self.deinflect_generic_suffix(text),
@@ -636,15 +633,24 @@ pub trait RuleDeinflectFnTrait: 'static {
             ),
         }
     }
+
     fn deinflect_generic_suffix(&self, text: &str) -> String {
-        let inflected_suffix = self.inflected();
-        if let Some(base) = text.strip_suffix(inflected_suffix) {
-            format!("{}{}", base, self.deinflected())
+        let inflected_pattern = self.inflected();
+        // Remove the trailing '$' if it exists.
+        let inflected_literal = if inflected_pattern.ends_with('$') {
+            &inflected_pattern[..inflected_pattern.len() - 1]
         } else {
-            eprintln!("inflected: {inflected_suffix} didn't match anything in {text}");
-            text.to_string() // or panic
-        }
+            &inflected_pattern
+        };
+        let deinflected_suffix = self.deinflected();
+        let base = if text.len() >= inflected_literal.len() {
+            &text[..text.len() - inflected_literal.len()]
+        } else {
+            ""
+        };
+        format!("{}{}", base, deinflected_suffix)
     }
+
     fn deinflect_generic_prefix(&self, text: &str) -> String {
         let deinflected_prefix = self.deinflected();
         let inflected_prefix = self.inflected();
@@ -654,6 +660,7 @@ pub trait RuleDeinflectFnTrait: 'static {
             .collect::<String>();
         format!("{deinflected_prefix}{slice}")
     }
+
     /// [`DeinflectFnType::EnCreatePhrasalVerbInflection`]
     fn english_create_phrasal_verb_inflection_deinflect(&self, text: &str) -> String {
         let inflected = self.inflected();
@@ -664,7 +671,9 @@ pub trait RuleDeinflectFnTrait: 'static {
             &*PHRASAL_VERB_WORD_DISJUNCTION
         );
         let re = Regex::new(&pattern).unwrap();
-        re.replace(text, deinflected).to_string()
+        let res = re.replace(text, deinflected).to_string();
+        dbug!("deinflected string:", res);
+        res
     }
 
     /// [`DeinflectFnType::EnPhrasalVerbInterposedObjectRule`]
@@ -700,8 +709,14 @@ impl RuleDeinflectFnTrait for SuffixRule {
     fn deinflect_fn_type(&self) -> DeinflectFnType {
         self.deinflect_fn
     }
-    fn inflected(&self) -> &'static str {
-        self.is_inflected.as_str().to_string().leak()
+    fn inflected(&self) -> &str {
+        let str = self.is_inflected.as_str();
+        let res = (match str.ends_with('$') {
+            true => &str[..str.len() - 1],
+            false => str,
+        }) as _;
+        dbug!(("getting inflected() from trait: {res}"));
+        res
     }
     fn deinflected(&self) -> &'static str {
         self.deinflected
@@ -748,18 +763,6 @@ mod suffix_rule {
 
     use super::{RuleType, SuffixRule};
     use fancy_regex::Regex;
-
-    //#[test]
-    // fn debug_display() {
-    //     let sr = SuffixRule {
-    //         rule_type: RuleType::Suffix,
-    //         is_inflected: Regex::new(r"\d").unwrap(),
-    //         deinflected: "食べる",
-    //         conditions_in: &[""],
-    //         conditions_out: &[""],
-    //     };
-    //     dbg!(sr);
-    // }
 }
 
 pub type DeinflectFn = Arc<dyn Fn(&str) -> String>;
@@ -800,8 +803,12 @@ impl RuleDeinflectFnTrait for Rule {
     fn deinflect_fn_type(&self) -> DeinflectFnType {
         self.deinflect_fn
     }
-    fn inflected(&self) -> &'static str {
-        self.is_inflected.as_str().to_string().leak()
+    fn inflected(&self) -> &str {
+        let str = self.is_inflected.as_str();
+        (match str.ends_with('$') {
+            true => &str[..str.len() - 1],
+            false => str,
+        }) as _
     }
     fn deinflected(&self) -> &'static str {
         self.deinflected
@@ -835,13 +842,13 @@ impl From<Rule> for SuffixRule {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct RuleI18n {
-    pub language: String,
-    pub name: String,
+    pub language: &'static str,
+    pub name: &'static str,
 }
 
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "camelCase")]
 pub enum RuleType {
     Suffix,
@@ -886,12 +893,9 @@ mod language_transformer_tests {
             .iter()
             .map(|(_id, transform)| (transform.name, transform.rules.len()))
             .collect();
-        JS.iter()
-            .zip(rust.iter())
-            .enumerate()
-            .for_each(|(i, (test, transform))| {
-                assert_eq!(transform.1, *test, "failed on: (TF: {} )", transform.0,);
-            });
+        JS.iter().zip(rust.iter()).for_each(|(test, transform)| {
+            assert_eq!(transform.1, *test, "failed on: (TF: {} )", transform.0,);
+        });
     }
 
     #[test]

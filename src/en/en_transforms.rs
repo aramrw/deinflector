@@ -1,16 +1,19 @@
 use std::{
     collections::HashSet,
+    ops::Deref,
+    str::FromStr,
     sync::{Arc, LazyLock},
 };
 
 use fancy_regex::Regex;
 use indexmap::{IndexMap, IndexSet};
+use strace::dbug;
 
 use crate::{
     ja::ja_transforms::{LanguageTransformerTestCase, TransformTest},
     transformer::{
-        Condition, ConditionMap, DeinflectFnType, LanguageTransformDescriptor, Rule, RuleType,
-        SuffixRule, Transform, TransformMap,
+        Condition, ConditionMap, DeinflectFnType, LanguageTransformDescriptor, Rule,
+        RuleDeinflectFnTrait, RuleType, SuffixRule, Transform, TransformMap,
     },
     transforms::inflection,
 };
@@ -22,7 +25,7 @@ use crate::{
 /// ```
 /// use super::*;
 /// // output shortened for brevity:
-/// // [("bbing$", "b"), ("dding$", "b"), ("gging$", "g"), ("kking$", "k")] 
+/// // [("bbing$", "b"), ("dding$", "b"), ("gging$", "g"), ("kking$", "k")]
 /// doubled_consonant_inflection("bdgk", "ing", &["v"], &["v"])
 /// ```
 fn doubled_consonant_inflection<'a: 'static>(
@@ -58,7 +61,7 @@ fn double_consonant_inflection() {
             is_inflected: Regex::new("bbing$").unwrap(),
             deinflected: Some("b"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
-            conditions_in: &[""],
+            conditions_in: &["v"],
             conditions_out: &["v"],
         },
         Rule {
@@ -152,7 +155,8 @@ fn double_consonant_inflection() {
     ];
     let result: Vec<Rule> = doubled_consonant_inflection("bdgklmnprstz", "ing", &["v"], &["v"])
         .into_iter()
-        .map(|sr| sr.into()).collect();
+        .map(|sr| sr.into())
+        .collect();
     passert_eq!(result, expected);
 }
 
@@ -178,12 +182,13 @@ pub static PAST_SUFFIX_INFLECTIONS: LazyLock<Vec<SuffixRule>> = LazyLock::new(||
     .collect()
 });
 
+/// ["walking", "driving", "lying", "panicking"]
 pub static ING_SUFFIX_INFLECTIONS: LazyLock<Vec<SuffixRule>> = LazyLock::new(|| {
     [
-        inflection("ing", "", &["v"], &["v"], RuleType::Suffix).into(), // "walking"
-        inflection("ing", "e", &["v"], &["v"], RuleType::Suffix).into(), // "driving"
-        inflection("ying", "ie", &["v"], &["v"], RuleType::Suffix).into(), // "lying"
-        inflection("cking", "c", &["v"], &["v"], RuleType::Suffix).into(), // "panicking"]
+        inflection("ing", "", &["v"], &["v"], RuleType::Suffix).into(),
+        inflection("ing", "e", &["v"], &["v"], RuleType::Suffix).into(),
+        inflection("ying", "ie", &["v"], &["v"], RuleType::Suffix).into(),
+        inflection("cking", "c", &["v"], &["v"], RuleType::Suffix).into(),
     ]
     .into_iter()
     .chain(doubled_consonant_inflection(
@@ -195,12 +200,173 @@ pub static ING_SUFFIX_INFLECTIONS: LazyLock<Vec<SuffixRule>> = LazyLock::new(|| 
     .collect()
 });
 
+#[test]
+fn ing_suffix_inflections() {
+    use pretty_assertions::assert_eq as passert_eq;
+    let expected: &[SuffixRule] = &[
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("ing$").unwrap(),
+            deinflected: "",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("ing$").unwrap(),
+            deinflected: "e",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("ying$").unwrap(),
+            deinflected: "ie",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("cking$").unwrap(),
+            deinflected: "c",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("bbing$").unwrap(),
+            deinflected: "b",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("dding$").unwrap(),
+            deinflected: "d",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("gging$").unwrap(),
+            deinflected: "g",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("kking$").unwrap(),
+            deinflected: "k",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("lling$").unwrap(),
+            deinflected: "l",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("mming$").unwrap(),
+            deinflected: "m",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("nning$").unwrap(),
+            deinflected: "n",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("pping$").unwrap(),
+            deinflected: "p",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("rring$").unwrap(),
+            deinflected: "r",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("ssing$").unwrap(),
+            deinflected: "s",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("tting$").unwrap(),
+            deinflected: "t",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+        SuffixRule {
+            rule_type: RuleType::Suffix,
+            is_inflected: Regex::new("zzing$").unwrap(),
+            deinflected: "z",
+            deinflect_fn: DeinflectFnType::GenericSuffix,
+            conditions_in: &["v"],
+            conditions_out: &["v"],
+        },
+    ];
+    passert_eq!(&*ING_SUFFIX_INFLECTIONS, expected);
+
+    let deinflect_txt_expected = [
+        "going to w",
+        "going to we",
+        "going to ie",
+        "going toc",
+        "going tob",
+        "going tod",
+        "going tog",
+        "going tok",
+        "going tol",
+        "going tom",
+        "going ton",
+        "going top",
+        "going tor",
+        "going tos",
+        "going tot",
+        "going toz",
+    ].to_vec();
+    let results = ING_SUFFIX_INFLECTIONS
+        .iter()
+        .map(|rule| rule.deinflect("going to walk"))
+        .collect::<Vec<String>>();
+    passert_eq!(deinflect_txt_expected, results);
+}
+
+/// ["walks", "teaches", "tries"]
 pub static THIRD_PERSON_SG_PRESENT_SUFFIX_INFLECTIONS: LazyLock<[SuffixRule; 3]> =
     LazyLock::new(|| {
         [
-            inflection("s", "", &["v"], &["v"], RuleType::Suffix).into(), // "walks"
-            inflection("es", "", &["v"], &["v"], RuleType::Suffix).into(), // "teaches"
-            inflection("ies", "y", &["v"], &["v"], RuleType::Suffix).into(), // "tries"
+            inflection("s", "", &["v"], &["v"], RuleType::Suffix).into(),
+            inflection("es", "", &["v"], &["v"], RuleType::Suffix).into(),
+            inflection("ies", "y", &["v"], &["v"], RuleType::Suffix).into(),
         ]
     });
 
@@ -210,6 +376,7 @@ const PHRASAL_VERB_PARTICLES: [&str; 57] =
 #[rustfmt::skip]
 pub const PHRASAL_VERB_PREPOSITIONS: [&str; 50] =  ["aback", "about", "above", "across", "after", "against", "ahead", "along", "among", "apart", "around", "as", "aside", "at", "away", "back", "before", "behind", "below", "between", "beyond", "by", "down", "even", "for", "forth", "forward", "from", "in", "into", "of", "off", "on", "onto", "open", "out", "over", "past", "round", "through", "to", "together", "toward", "towards", "under", "up", "upon", "way", "with", "without"];
 
+// the ordering of words in your disjunction isn’t guaranteed
 pub static PARTICLES_DISJUNCTION: LazyLock<String> =
     LazyLock::new(|| PHRASAL_VERB_PARTICLES.join("|"));
 pub static PHRASAL_VERB_WORD_SET: LazyLock<IndexSet<&str>> = LazyLock::new(|| {
@@ -227,6 +394,7 @@ pub static PHRASAL_VERB_WORD_DISJUNCTION: LazyLock<String> = LazyLock::new(|| {
         .join("|")
 });
 
+/// https://github.com/yomidevs/yomitan/blob/4427bcf3c2de3d294b9a82aac2f97d6e72c2706c/ext/js/language/en/english-transforms.js#L72
 pub static PHRASAL_VERB_INTERPOSED_OBJECT_RULE: LazyLock<Rule> = LazyLock::new(|| Rule {
     rule_type: RuleType::Other,
     is_inflected: fancy_regex::Regex::new(&format!(
@@ -240,6 +408,27 @@ pub static PHRASAL_VERB_INTERPOSED_OBJECT_RULE: LazyLock<Rule> = LazyLock::new(|
     conditions_in: &[],
     conditions_out: &["v_phr"],
 });
+
+#[test]
+fn test_phrasal_verb_interposed_object_rule() {
+    use pretty_assertions::assert_eq as passert_eq;
+    let expected = Rule {
+        rule_type: RuleType::Other,
+        is_inflected: Regex::from_str(
+            r"^\w* (?:(?!\b(aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)\b).)+ (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without)"        
+        ).unwrap(),
+        deinflected: None,
+        deinflect_fn: DeinflectFnType::EnPhrasalVerbInterposedObjectRule,
+        conditions_in: &[],
+        conditions_out: &["v_phr"],
+    };
+    let result = PHRASAL_VERB_INTERPOSED_OBJECT_RULE.deref();
+    passert_eq!(*result, expected);
+    // no change happens in javascript as well
+    let result_txt = expected.deinflect("going to walk");
+    let expected_txt = "going to walk";
+    passert_eq!(result_txt, expected_txt);
+}
 
 /// has deinflect_fn type of: [`DeinflectFnType::EnCreatePhrasalVerbInflection`]
 /// only used in english
@@ -450,63 +639,63 @@ static ENGLISH_TRANSFORMS_DESCRIPTOR: LazyLock<LanguageTransformDescriptor> =
 static EN_CONDITIONS_MAP: LazyLock<ConditionMap> = LazyLock::new(|| {
     ConditionMap(IndexMap::from([
         (
-            "v".into(),
+            "v",
             Condition {
-                name: "Verb".into(),
+                name: "Verb",
                 is_dictionary_form: true,
                 sub_conditions: Some(&["v_phr"]),
                 i18n: None,
             },
         ),
         (
-            "v_phr".into(),
+            "v_phr",
             Condition {
-                name: "Phrasal verb".into(),
+                name: "Phrasal verb",
                 is_dictionary_form: true,
                 sub_conditions: None,
                 i18n: None,
             },
         ),
         (
-            "n".into(),
+            "n",
             Condition {
-                name: "Noun".into(),
+                name: "Noun",
                 is_dictionary_form: true,
                 sub_conditions: Some(&["np", "ns"]),
                 i18n: None,
             },
         ),
         (
-            "np".into(),
+            "np",
             Condition {
-                name: "Noun plural".into(),
+                name: "Noun plural",
                 is_dictionary_form: true,
                 sub_conditions: None,
                 i18n: None,
             },
         ),
         (
-            "ns".into(),
+            "ns",
             Condition {
-                name: "Noun singular".into(),
+                name: "Noun singular",
                 is_dictionary_form: true,
                 sub_conditions: None,
                 i18n: None,
             },
         ),
         (
-            "adj".into(),
+            "adj",
             Condition {
-                name: "Adjective".into(),
+                name: "Adjective",
                 is_dictionary_form: true,
                 sub_conditions: None,
                 i18n: None,
             },
         ),
         (
-            "adv".into(),
+            "adv",
             Condition {
-                name: "Adverb".into(),
+                name: "Adverb",
                 is_dictionary_form: true,
                 sub_conditions: None,
                 i18n: None,
@@ -817,7 +1006,7 @@ pub(crate) static EN_ADJ_TESTS: LazyLock<TransformTest> = LazyLock::new(|| Trans
 
 /// cargo test en_transforms_test
 #[cfg(test)]
-pub(crate) mod en_transforms_test {
+pub(crate) mod entransforms {
     use crate::{
         ja::ja_transforms::{has_term_reasons, JP_TRANSFORM_TESTS},
         transformer::{LanguageTransformer, TraceFrame, TransformedText},
@@ -830,7 +1019,7 @@ pub(crate) mod en_transforms_test {
     fn len() {
         assert_eq!(ENGLISH_TRANSFORMS_DESCRIPTOR.transforms.len(), 17);
         assert_eq!(ENGLISH_TRANSFORMS_DESCRIPTOR.conditions.len(), 7);
-        dbg!(&ENGLISH_TRANSFORMS_DESCRIPTOR);
+        //dbg!(ENGLISH_TRANSFORMS_DESCRIPTOR.transforms);
     }
 
     #[test]
@@ -838,7 +1027,7 @@ pub(crate) mod en_transforms_test {
         let mut lt = LanguageTransformer::new();
         lt.add_descriptor(&ENGLISH_TRANSFORMS_DESCRIPTOR).unwrap();
 
-        let test = vec![
+        let expected = vec![
             TransformedText {
                 text: "going to walk".into(),
                 conditions: 0,
@@ -873,7 +1062,7 @@ pub(crate) mod en_transforms_test {
             },
         ];
         let res = lt.transform("going to walk");
-        assert_eq!(res, test)
+        assert_eq!(res, expected)
     }
 
     // #[test]

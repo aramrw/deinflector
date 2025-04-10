@@ -77,14 +77,14 @@ impl MultiLanguageTransformer {
     pub(crate) fn get_user_facing_inflection_rules(
         &self,
         language: &str,
-        inflection_rules: &[&str],
+        inflection_rules: &[&'static str],
     ) -> InflectionRuleChain {
         match self.inner.get(language) {
             Some(lt) => lt.get_user_facing_inflection_rules(inflection_rules),
             None => inflection_rules
                 .iter()
                 .map(|rule| InflectionRule {
-                    name: rule.to_string(),
+                    name: rule,
                     description: None,
                 })
                 .collect(),
@@ -94,12 +94,82 @@ impl MultiLanguageTransformer {
 
 #[cfg(test)]
 mod mlt {
+    use crate::transformer::{Trace, TraceFrame, TransformedText};
+
     use super::MultiLanguageTransformer;
+    use pretty_assertions::assert_eq as passert_eq;
 
     #[test]
     fn transform() {
+        let expected: &[TransformedText] = &[
+            TransformedText {
+                text: "流れて".into(),
+                conditions: 0,
+                trace: vec![],
+            },
+            TransformedText {
+                text: "流れる".into(),
+                conditions: 3,
+                trace: vec![TraceFrame {
+                    transform: "-て".into(),
+                    rule_index: 1,
+                    text: "流れて".into(),
+                }],
+            },
+            TransformedText {
+                text: "流れつ".into(),
+                conditions: 28,
+                trace: vec![TraceFrame {
+                    transform: "imperative".into(),
+                    rule_index: 6,
+                    text: "流れて".into(),
+                }],
+            },
+            TransformedText {
+                text: "流れてる".into(),
+                conditions: 1,
+                trace: vec![TraceFrame {
+                    transform: "continuative".into(),
+                    rule_index: 10,
+                    text: "流れて".into(),
+                }],
+            },
+            TransformedText {
+                text: "流る".into(),
+                conditions: 7,
+                trace: vec![
+                    TraceFrame {
+                        transform: "potential".into(),
+                        rule_index: 0,
+                        text: "流れる".into(),
+                    },
+                    TraceFrame {
+                        transform: "-て".into(),
+                        rule_index: 1,
+                        text: "流れて".into(),
+                    },
+                ],
+            },
+            TransformedText {
+                text: "流れつ".into(),
+                conditions: 4,
+                trace: vec![
+                    TraceFrame {
+                        transform: "potential".into(),
+                        rule_index: 5,
+                        text: "流れてる".into(),
+                    },
+                    TraceFrame {
+                        transform: "continuative".into(),
+                        rule_index: 10,
+                        text: "流れて".into(),
+                    },
+                ],
+            },
+        ];
+
         let mlt = MultiLanguageTransformer::new();
         let res = mlt.transform("ja", "流れて");
-        dbg!(res);
+        passert_eq!(res, expected);
     }
 }
