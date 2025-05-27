@@ -937,5 +937,5 @@ pub fn collapse_emphatic_sequences(text: String, full_collapse: bool) -> String 
         }
     }
 
-    format!("{}{}{}", leading_emphatics, middle, trailing_emphatics)
+    format!("{leading_emphatics}{middle}{trailing_emphatics}")
 }
