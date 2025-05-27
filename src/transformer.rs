@@ -37,6 +37,7 @@ pub struct InternalTransform {
 pub struct InternalRule {
     pub rule_type: RuleType,
     pub is_inflected: Regex,
+    pub inflected_str: Option<String>,
     pub deinflected: &'static str,
     pub deinflect_fn: DeinflectFnType,
     pub conditions_in: usize,
@@ -53,6 +54,9 @@ impl RuleDeinflectFnTrait for InternalRule {
             true => &str[..str.len() - 1],
             false => str,
         }) as _
+    }
+    fn inflected_str(&self) -> Option<&str> {
+        self.inflected_str.as_deref()
     }
     fn deinflected(&self) -> &str {
         self.deinflected
@@ -152,7 +156,7 @@ pub enum ConditionError {
 
 impl std::fmt::Debug for ConditionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({})", self)
+        write!(f, "({self})")
     }
 }
 
@@ -215,6 +219,7 @@ impl LanguageTransformer {
                     deinflected,
                     conditions_in,
                     conditions_out,
+                    inflected_str,
                 } = rule.clone();
 
                 let condition_flags_in = LanguageTransformer::get_condition_flags_strict(
@@ -239,6 +244,7 @@ impl LanguageTransformer {
                     deinflect_fn,
                     rule_type,
                     is_inflected,
+                    inflected_str,
                     deinflected: deinflected.unwrap_or(""),
                     conditions_in: condition_flags_in,
                     conditions_out: condition_flags_out,
@@ -615,6 +621,7 @@ impl Display for DeinflectFnType {
 pub trait RuleDeinflectFnTrait: 'static {
     fn deinflect_fn_type(&self) -> DeinflectFnType;
     fn inflected(&self) -> &str;
+    fn inflected_str(&self) -> Option<&str>;
     fn deinflected(&self) -> &str;
     /// Matches on [`DeinflectFnType`]
     fn deinflect(&self, text: &str) -> String {
@@ -640,7 +647,7 @@ pub trait RuleDeinflectFnTrait: 'static {
         let inflected_literal = if inflected_pattern.ends_with('$') {
             &inflected_pattern[..inflected_pattern.len() - 1]
         } else {
-            &inflected_pattern
+            inflected_pattern
         };
         let deinflected_suffix = self.deinflected();
         let base = if text.len() >= inflected_literal.len() {
@@ -648,23 +655,30 @@ pub trait RuleDeinflectFnTrait: 'static {
         } else {
             ""
         };
-        format!("{}{}", base, deinflected_suffix)
+        format!("{base}{deinflected_suffix}")
     }
 
     fn deinflect_generic_prefix(&self, text: &str) -> String {
         let deinflected_prefix = self.deinflected();
-        let inflected_prefix = self.inflected();
-        let slice = text
-            .chars()
-            .skip(inflected_prefix.chars().count())
-            .collect::<String>();
-        format!("{deinflected_prefix}{slice}")
+        // GET THE LITERAL PREFIX HERE
+        // (e.g., from self.inflected_str().unwrap() or similar) ***
+        let inflected_literal_prefix = self
+            .inflected_str()
+            .expect("Prefix rule missing literal prefix");
+        // Use strip_prefix - it's safer as it CHECKS if the text starts with the prefix
+        if let Some(slice) = text.strip_prefix(inflected_literal_prefix) {
+            format!("{deinflected_prefix}{slice}")
+        } else {
+            // This shouldn't happen if is_inflected matched, but it's good to be safe
+            text.to_string()
+        }
     }
 
     /// [`DeinflectFnType::EnCreatePhrasalVerbInflection`]
     fn english_create_phrasal_verb_inflection_deinflect(&self, text: &str) -> String {
-        let inflected = self.inflected();
+        let inflected = self.inflected_str().unwrap();
         let deinflected = self.deinflected();
+        dbug!(deinflected);
         let pattern = format!(
             r"(?<=){}(?= (?:{}))",
             fancy_regex::escape(inflected),
@@ -672,7 +686,7 @@ pub trait RuleDeinflectFnTrait: 'static {
         );
         let re = Regex::new(&pattern).unwrap();
         let res = re.replace(text, deinflected).to_string();
-        dbug!("deinflected string:", res);
+        //dbug!("deinflected string:", res);
         res
     }
 
@@ -699,6 +713,7 @@ pub struct SuffixRule {
     // Use custom deserialization function for `Regex`
     //#[serde(deserialize_with = "deserialize_regex")]
     pub is_inflected: fancy_regex::Regex,
+    pub inflected_str: Option<String>,
     pub deinflected: &'static str,
     pub deinflect_fn: DeinflectFnType,
     pub conditions_in: &'static [&'static str],
@@ -717,6 +732,9 @@ impl RuleDeinflectFnTrait for SuffixRule {
         }) as _;
         dbug!(("getting inflected() from trait: {res}"));
         res
+    }
+    fn inflected_str(&self) -> Option<&str> {
+        self.inflected_str.as_deref()
     }
     fn deinflected(&self) -> &'static str {
         self.deinflected
@@ -775,6 +793,8 @@ pub struct Rule {
     //#[derivative(PartialEq = "ignore")]
     #[derivative(PartialEq(compare_with = "partialeq_regex"))]
     pub is_inflected: Regex,
+    /// the regex str without any regex in it
+    pub inflected_str: Option<String>,
     // if type is SuffixRule will be Some,
     pub deinflected: Option<&'static str>,
     pub deinflect_fn: DeinflectFnType,
@@ -810,6 +830,9 @@ impl RuleDeinflectFnTrait for Rule {
             false => str,
         }) as _
     }
+    fn inflected_str(&self) -> Option<&str> {
+        self.inflected_str.as_deref()
+    }
     fn deinflected(&self) -> &'static str {
         self.deinflected
             .expect("<self.deinflected: &str> cannot be called on a Rule, you might have meant to pass a SuffixRule")
@@ -821,6 +844,7 @@ impl From<SuffixRule> for Rule {
         Self {
             rule_type: suffix.rule_type,
             is_inflected: suffix.is_inflected,
+            inflected_str: suffix.inflected_str,
             deinflected: Some(suffix.deinflected),
             deinflect_fn: suffix.deinflect_fn,
             conditions_in: suffix.conditions_in,
@@ -834,6 +858,7 @@ impl From<Rule> for SuffixRule {
         Self {
             rule_type: x.rule_type,
             is_inflected: x.is_inflected,
+            inflected_str: x.inflected_str,
             deinflected: x.deinflected.unwrap_or(""),
             deinflect_fn: x.deinflect_fn,
             conditions_in: x.conditions_in,

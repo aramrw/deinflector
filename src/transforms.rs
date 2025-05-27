@@ -36,6 +36,7 @@ pub fn inflection(
         is_inflected,
         deinflected,
         deinflect_fn,
+        inflected_str: Some(inflected.to_string()),
         conditions_in,
         conditions_out,
     }

@@ -59,6 +59,7 @@ fn double_consonant_inflection() {
         Rule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("bbing$").unwrap(),
+            inflected_str: Some("bbing".to_string()),
             deinflected: Some("b"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -67,6 +68,7 @@ fn double_consonant_inflection() {
         Rule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("dding$").unwrap(),
+            inflected_str: Some("dding".to_string()),
             deinflected: Some("d"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -75,6 +77,7 @@ fn double_consonant_inflection() {
         Rule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("gging$").unwrap(),
+            inflected_str: Some("gging".to_string()),
             deinflected: Some("g"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -83,6 +86,7 @@ fn double_consonant_inflection() {
         Rule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("kking$").unwrap(),
+            inflected_str: Some("kking".to_string()),
             deinflected: Some("k"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -91,6 +95,7 @@ fn double_consonant_inflection() {
         Rule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("lling$").unwrap(),
+            inflected_str: Some("lling".to_string()),
             deinflected: Some("l"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -99,6 +104,7 @@ fn double_consonant_inflection() {
         Rule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("mming$").unwrap(),
+            inflected_str: Some("mming".to_string()),
             deinflected: Some("m"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -107,6 +113,7 @@ fn double_consonant_inflection() {
         Rule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("nning$").unwrap(),
+            inflected_str: Some("nning".to_string()),
             deinflected: Some("n"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -115,6 +122,7 @@ fn double_consonant_inflection() {
         Rule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("pping$").unwrap(),
+            inflected_str: Some("pping".to_string()),
             deinflected: Some("p"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -123,6 +131,7 @@ fn double_consonant_inflection() {
         Rule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("rring$").unwrap(),
+            inflected_str: Some("rring".to_string()),
             deinflected: Some("r"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -131,6 +140,7 @@ fn double_consonant_inflection() {
         Rule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("ssing$").unwrap(),
+            inflected_str: Some("ssing".to_string()),
             deinflected: Some("s"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -139,6 +149,7 @@ fn double_consonant_inflection() {
         Rule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("tting$").unwrap(),
+            inflected_str: Some("tting".to_string()),
             deinflected: Some("t"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -147,6 +158,7 @@ fn double_consonant_inflection() {
         Rule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("zzing$").unwrap(),
+            inflected_str: Some("zzing".to_string()),
             deinflected: Some("z"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -207,6 +219,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("ing$").unwrap(),
+            inflected_str: Some("ing".to_string()), // Added
             deinflected: "",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -215,6 +228,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("ing$").unwrap(),
+            inflected_str: Some("ing".to_string()), // Added
             deinflected: "e",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -223,6 +237,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("ying$").unwrap(),
+            inflected_str: Some("ying".to_string()), // Added
             deinflected: "ie",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -231,6 +246,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("cking$").unwrap(),
+            inflected_str: Some("cking".to_string()), // Added
             deinflected: "c",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -239,6 +255,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("bbing$").unwrap(),
+            inflected_str: Some("bbing".to_string()), // Added
             deinflected: "b",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -247,6 +264,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("dding$").unwrap(),
+            inflected_str: Some("dding".to_string()), // Added
             deinflected: "d",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -255,6 +273,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("gging$").unwrap(),
+            inflected_str: Some("gging".to_string()), // Added
             deinflected: "g",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -263,6 +282,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("kking$").unwrap(),
+            inflected_str: Some("kking".to_string()), // Added
             deinflected: "k",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -271,6 +291,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("lling$").unwrap(),
+            inflected_str: Some("lling".to_string()), // Added
             deinflected: "l",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -279,6 +300,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("mming$").unwrap(),
+            inflected_str: Some("mming".to_string()), // Added
             deinflected: "m",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -287,6 +309,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("nning$").unwrap(),
+            inflected_str: Some("nning".to_string()), // Added
             deinflected: "n",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -295,6 +318,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("pping$").unwrap(),
+            inflected_str: Some("pping".to_string()), // Added
             deinflected: "p",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -303,6 +327,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("rring$").unwrap(),
+            inflected_str: Some("rring".to_string()), // Added
             deinflected: "r",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -311,6 +336,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("ssing$").unwrap(),
+            inflected_str: Some("ssing".to_string()), // Added
             deinflected: "s",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -319,6 +345,7 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("tting$").unwrap(),
+            inflected_str: Some("tting".to_string()), // Added
             deinflected: "t",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
@@ -327,12 +354,14 @@ fn ing_suffix_inflections() {
         SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("zzing$").unwrap(),
+            inflected_str: Some("zzing".to_string()), // Added
             deinflected: "z",
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
         },
     ];
+
     passert_eq!(&*ING_SUFFIX_INFLECTIONS, expected);
 
     let deinflect_txt_expected = [
@@ -352,7 +381,8 @@ fn ing_suffix_inflections() {
         "going tos",
         "going tot",
         "going toz",
-    ].to_vec();
+    ]
+    .to_vec();
     let results = ING_SUFFIX_INFLECTIONS
         .iter()
         .map(|rule| rule.deinflect("going to walk"))
@@ -402,6 +432,7 @@ pub static PHRASAL_VERB_INTERPOSED_OBJECT_RULE: LazyLock<Rule> = LazyLock::new(|
         &*PHRASAL_VERB_WORD_DISJUNCTION, &*PARTICLES_DISJUNCTION
     ))
     .unwrap(),
+    inflected_str: None,
     // deinflected is not necessary for this fn
     deinflected: None,
     deinflect_fn: DeinflectFnType::EnPhrasalVerbInterposedObjectRule,
@@ -415,8 +446,9 @@ fn test_phrasal_verb_interposed_object_rule() {
     let expected = Rule {
         rule_type: RuleType::Other,
         is_inflected: Regex::from_str(
-            r"^\w* (?:(?!\b(aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)\b).)+ (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without)"        
+            r"^\w* (?:(?!\b(aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)\b).)+ (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without)"
         ).unwrap(),
+        inflected_str: None,
         deinflected: None,
         deinflect_fn: DeinflectFnType::EnPhrasalVerbInterposedObjectRule,
         conditions_in: &[],
@@ -432,7 +464,7 @@ fn test_phrasal_verb_interposed_object_rule() {
 
 /// has deinflect_fn type of: [`DeinflectFnType::EnCreatePhrasalVerbInflection`]
 /// only used in english
-fn create_phrasal_verb_inflection(inflected: &str, deinflected: &'static str) -> Rule {
+fn create_phrasal_verb_inflection(inflected: String, deinflected: &'static str) -> Rule {
     let is_inflected = Regex::new(&format!(
         r"^\w*{} (?:{})",
         inflected, &*PHRASAL_VERB_WORD_DISJUNCTION
@@ -441,6 +473,7 @@ fn create_phrasal_verb_inflection(inflected: &str, deinflected: &'static str) ->
     Rule {
         rule_type: RuleType::Other,
         is_inflected,
+        inflected_str: Some(inflected),
         deinflected: Some(deinflected),
         deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
         conditions_in: &["v"],
@@ -459,7 +492,7 @@ fn create_phrasal_verb_inflections_from_suffix_inflections(
             let deinflected_suffix = sr.deinflected;
             // create verb inflection based on suffixes
             vec![create_phrasal_verb_inflection(
-                &inflected_suffix,
+                inflected_suffix,
                 deinflected_suffix,
             )]
         })
@@ -472,6 +505,7 @@ fn test_create_phrasal_verb_inflections_from_suffix_inflections() {
         Rule {
             rule_type: RuleType::Other,
             is_inflected: Regex::new(r"^\w*ed (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("ed".to_string()),
             deinflected: Some(""),
             deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
             conditions_in: &["v"],
@@ -480,6 +514,7 @@ fn test_create_phrasal_verb_inflections_from_suffix_inflections() {
         Rule {
             rule_type: RuleType::Other,
             is_inflected: Regex::new(r"^\w*ed (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("ed".to_string()),
             deinflected: Some("e"),
             deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
             conditions_in: &["v"],
@@ -488,6 +523,7 @@ fn test_create_phrasal_verb_inflections_from_suffix_inflections() {
         Rule {
             rule_type: RuleType::Other,
             is_inflected: Regex::new(r"^\w*ied (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("ied".to_string()),
             deinflected: Some("y"),
             deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
             conditions_in: &["v"],
@@ -496,6 +532,7 @@ fn test_create_phrasal_verb_inflections_from_suffix_inflections() {
         Rule {
             rule_type: RuleType::Other,
             is_inflected: Regex::new(r"^\w*cked (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("cked".to_string()),
             deinflected: Some("c"),
             deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
             conditions_in: &["v"],
@@ -504,6 +541,7 @@ fn test_create_phrasal_verb_inflections_from_suffix_inflections() {
         Rule {
             rule_type: RuleType::Other,
             is_inflected: Regex::new(r"^\w*bbed (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("bbed".to_string()),
             deinflected: Some("b"),
             deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
             conditions_in: &["v"],
@@ -512,6 +550,7 @@ fn test_create_phrasal_verb_inflections_from_suffix_inflections() {
         Rule {
             rule_type: RuleType::Other,
             is_inflected: Regex::new(r"^\w*dded (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("dded".to_string()),
             deinflected: Some("d"),
             deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
             conditions_in: &["v"],
@@ -520,6 +559,7 @@ fn test_create_phrasal_verb_inflections_from_suffix_inflections() {
         Rule {
             rule_type: RuleType::Other,
             is_inflected: Regex::new(r"^\w*gged (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("gged".to_string()),
             deinflected: Some("g"),
             deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
             conditions_in: &["v"],
@@ -528,6 +568,7 @@ fn test_create_phrasal_verb_inflections_from_suffix_inflections() {
         Rule {
     rule_type: RuleType::Other,
     is_inflected: Regex::new(r"^\w*kked (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("kked".to_string()),
     deinflected: Some("k"),
     deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
     conditions_in: &["v"],
@@ -536,6 +577,7 @@ fn test_create_phrasal_verb_inflections_from_suffix_inflections() {
 Rule {
     rule_type: RuleType::Other,
     is_inflected: Regex::new(r"^\w*lled (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("lled".to_string()),
     deinflected: Some("l"),
     deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
     conditions_in: &["v"],
@@ -544,6 +586,7 @@ Rule {
 Rule {
     rule_type: RuleType::Other,
     is_inflected: Regex::new(r"^\w*mmed (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("mmed".to_string()),
     deinflected: Some("m"),
     deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
     conditions_in: &["v"],
@@ -552,6 +595,7 @@ Rule {
 Rule {
     rule_type: RuleType::Other,
     is_inflected: Regex::new(r"^\w*nned (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("nned".to_string()),
     deinflected: Some("n"),
     deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
     conditions_in: &["v"],
@@ -560,6 +604,7 @@ Rule {
 Rule {
     rule_type: RuleType::Other,
     is_inflected: Regex::new(r"^\w*pped (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("pped".to_string()),
     deinflected: Some("p"),
     deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
     conditions_in: &["v"],
@@ -568,6 +613,7 @@ Rule {
 Rule {
     rule_type: RuleType::Other,
     is_inflected: Regex::new(r"^\w*rred (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("rred".to_string()),
     deinflected: Some("r"),
     deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
     conditions_in: &["v"],
@@ -576,6 +622,7 @@ Rule {
 Rule {
     rule_type: RuleType::Other,
     is_inflected: Regex::new(r"^\w*ssed (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("ssed".to_string()),
     deinflected: Some("s"),
     deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
     conditions_in: &["v"],
@@ -584,6 +631,7 @@ Rule {
 Rule {
     rule_type: RuleType::Other,
     is_inflected: Regex::new(r"^\w*tted (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("tted".to_string()),
     deinflected: Some("t"),
     deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
     conditions_in: &["v"],
@@ -592,6 +640,7 @@ Rule {
 Rule {
     rule_type: RuleType::Other,
     is_inflected: Regex::new(r"^\w*zzed (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("zzed".to_string()),
     deinflected: Some("z"),
     deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
     conditions_in: &["v"],
@@ -600,6 +649,7 @@ Rule {
 Rule {
     rule_type: RuleType::Other,
     is_inflected: Regex::new(r"^\w*laid (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("laid".to_string()),
     deinflected: Some("lay"),
     deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
     conditions_in: &["v"],
@@ -608,6 +658,7 @@ Rule {
 Rule {
     rule_type: RuleType::Other,
     is_inflected: Regex::new(r"^\w*paid (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("paid".to_string()),
     deinflected: Some("pay"),
     deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
     conditions_in: &["v"],
@@ -616,6 +667,7 @@ Rule {
 Rule {
     rule_type: RuleType::Other,
     is_inflected: Regex::new(r"^\w*said (?:aboard|about|above|across|ahead|alongside|apart|around|aside|astray|away|back|before|behind|below|beneath|besides|between|beyond|by|close|down|east|west|north|south|eastward|westward|northward|southward|forward|backward|backwards|forwards|home|in|inside|instead|near|off|on|opposite|out|outside|over|overhead|past|round|since|through|throughout|together|under|underneath|up|within|without|aback|after|against|along|among|as|at|even|for|forth|from|into|of|onto|open|to|toward|towards|upon|way|with)").unwrap(),
+            inflected_str: Some("said".to_string()),
     deinflected: Some("say"),
     deinflect_fn: DeinflectFnType::EnCreatePhrasalVerbInflection,
     conditions_in: &["v"],
@@ -973,7 +1025,7 @@ pub(crate) static EN_VERB_TESTS: LazyLock<TransformTest> = LazyLock::new(|| Tran
         LanguageTransformerTestCase {
             inner: "will walk",
             rule: "v",
-            reasons: vec!["imperative negative"],
+            reasons: vec!["will future"],
         },
         LanguageTransformerTestCase {
             inner: "don't walk",
@@ -1065,24 +1117,24 @@ pub(crate) mod entransforms {
         assert_eq!(res, expected)
     }
 
-    // #[test]
-    // fn transforms() {
-    //     let mut lt = LanguageTransformer::new();
-    //     lt.add_descriptor(&ENGLISH_TRANSFORMS_DESCRIPTOR).unwrap();
-    //
-    //     for (i, test) in EN_TRANSFORM_TESTS.iter().enumerate() {
-    //         let term = test.term;
-    //         for case in &test.sources {
-    //             let source = case.inner;
-    //             let rule = case.rule;
-    //             let expected_reasons = &case.reasons;
-    //
-    //             let result =
-    //                 has_term_reasons(&lt, source, term, Some(rule), Some(expected_reasons));
-    //             if let Err(e) = result {
-    //                 panic!("Failed: {}", e);
-    //             }
-    //         }
-    //     }
-    // }
+    #[test]
+    fn transforms() {
+        let mut lt = LanguageTransformer::new();
+        lt.add_descriptor(&ENGLISH_TRANSFORMS_DESCRIPTOR).unwrap();
+
+        for (i, test) in EN_TRANSFORM_TESTS.iter().enumerate() {
+            let term = test.term;
+            for case in &test.sources {
+                let source = case.inner;
+                let rule = case.rule;
+                let expected_reasons = &case.reasons;
+
+                let result =
+                    has_term_reasons(&lt, source, term, Some(rule), Some(expected_reasons));
+                if let Err(e) = result {
+                    panic!("Failed: {e}");
+                }
+            }
+        }
+    }
 }
