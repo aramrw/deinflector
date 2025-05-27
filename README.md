@@ -3,8 +3,8 @@ This library is the language agnostic internal deinflector for yomichan_rs.
 However it has no real hard connection to yomichan_rs so it can be used standalone for any other projects that might want a language deinflector.
 
 ### Roadmap (Soft Priority Ordering)
-- [ ] Japanese
-- [ ] English
+- [x] Japanese
+- [x] English
 - [ ] Spanish
 - [ ] Farsi
 - [ ] Arabic
