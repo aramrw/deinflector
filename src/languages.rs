@@ -11,10 +11,10 @@ pub fn get_language_summaries() -> Vec<LanguageSummary> {
     LANGUAGE_DESCRIPTORS_MAP
         .values()
         .map(|entry| LanguageSummary {
-            name: entry.name.clone(),
-            iso: entry.iso.clone(),
-            iso639_3: entry.iso639_3.clone(),
-            example_text: entry.example_text.clone(),
+            name: entry.name,
+            iso: entry.iso,
+            iso639_3: entry.iso639_3,
+            example_text: entry.example_text,
         })
         .collect::<Vec<LanguageSummary>>()
 }
@@ -30,7 +30,7 @@ pub fn get_all_language_reading_normalizers() -> Vec<LanguageAndReadingNormalize
         .filter_map(|entry| {
             if let Some(reading_normalizer) = entry.reading_normalizer {
                 return Some(LanguageAndReadingNormalizer {
-                    iso: entry.iso.clone(),
+                    iso: entry.iso,
                     reading_normalizer,
                 });
             };
@@ -64,7 +64,7 @@ pub fn get_all_language_transform_descriptors() -> Vec<LanguageAndTransforms> {
     for entry in LANGUAGE_DESCRIPTORS_MAP.values() {
         if let Some(language_transforms) = entry.language_transforms {
             let item = LanguageAndTransforms {
-                iso: entry.iso.clone(),
+                iso: entry.iso,
                 language_transforms: language_transforms.clone(),
             };
             results.push(item);

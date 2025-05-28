@@ -29,11 +29,11 @@ trait TextProcessable<T> {
 ///
 /// When a language has multiple processors, the translator will generate
 /// variants of the text by applying all combinations of the processors.
-#[derive(Clone)]
-pub struct TextProcessor<'a, O, S> {
-    pub name: &'a str,
-    pub description: &'a str,
-    pub options: &'a [O],
+#[derive(Debug, Clone)]
+pub struct TextProcessor<O: 'static, S> {
+    pub name: &'static str,
+    pub description: &'static str,
+    pub options: &'static [O],
     pub process: TextProcessorFP<S>,
 }
 
@@ -42,41 +42,41 @@ pub type TextProcessorFP<T> = fn(&str, T) -> String;
 /// Helper function to normalize .
 pub type ReadingNormalizer = fn(&str) -> String;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum BidirectionalPreProcessorOptions {
     Off,
     Direct,
     Inverse,
 }
 
-pub type BidirectionalConversionPreProcessor<'a> =
-    TextProcessor<'a, BidirectionalPreProcessorOptions, BidirectionalPreProcessorOptions>;
+pub type BidirectionalConversionPreProcessor =
+    TextProcessor<BidirectionalPreProcessorOptions, BidirectionalPreProcessorOptions>;
 
-pub struct LanguageAndProcessors<'a, O, S> {
+pub struct LanguageAndProcessors<O: 'static, S> {
     pub iso: String,
-    pub text_preprocessors: Option<Vec<TextProcessorWithId<'a, O, S>>>,
-    pub text_postprocessors: Option<Vec<TextProcessorWithId<'a, O, S>>>,
+    pub text_preprocessors: Option<Vec<TextProcessorWithId<O, S>>>,
+    pub text_postprocessors: Option<Vec<TextProcessorWithId<O, S>>>,
 }
 
 pub struct LanguageAndReadingNormalizer {
-    pub iso: String,
+    pub iso: &'static str,
     pub reading_normalizer: ReadingNormalizer,
 }
 
 pub struct LanguageAndTransforms {
-    pub iso: String,
+    pub iso: &'static str,
     pub language_transforms: LanguageTransformDescriptor,
 }
 
-pub struct TextProcessorWithId<'a, O, S> {
+pub struct TextProcessorWithId<O: 'static, S> {
     pub id: String,
-    pub text_processor: TextProcessor<'a, O, S>,
+    pub text_processor: TextProcessor<O, S>,
 }
 
 #[derive(Debug, Clone)]
 pub struct LanguageSummary {
-    pub name: String,
-    pub iso: String,
-    pub iso639_3: String,
-    pub example_text: String,
+    pub name: &'static str,
+    pub iso: &'static str,
+    pub iso639_3: &'static str,
+    pub example_text: &'static str,
 }

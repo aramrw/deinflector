@@ -6,6 +6,7 @@ mod descriptors;
 mod en;
 mod ja;
 mod japanese;
+mod text_scanner;
 mod language_d;
 mod languages;
 mod multi_language_transformer;

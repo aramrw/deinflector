@@ -82,9 +82,9 @@ pub const CONVERT_HIRAGANA_TO_KATAKANA: BidirectionalConversionPreProcessor =
         process: process_hiragana_to_katakana,
     };
 
-fn collapse_emphatic_sequences_helper(text: &str, setting: &[bool; 2]) -> String {
+fn collapse_emphatic_sequences_helper(text: &str, setting: [bool; 2]) -> String {
     let text = text.to_owned();
-    let [collapse_emphatic, collapse_emphatic_full] = *setting;
+    let [collapse_emphatic, collapse_emphatic_full] = setting;
     if collapse_emphatic {
         collapse_emphatic_sequences(text, collapse_emphatic_full)
     } else {
@@ -92,7 +92,7 @@ fn collapse_emphatic_sequences_helper(text: &str, setting: &[bool; 2]) -> String
     }
 }
 
-pub const COLLAPSE_EMPHATIC_SEQUENCES: TextProcessor<[bool; 2], &[bool; 2]> = TextProcessor {
+pub const COLLAPSE_EMPHATIC_SEQUENCES: TextProcessor<[bool; 2], [bool; 2]> = TextProcessor {
     name: "Collapse Emphatic Character Sequences",
     description: "すっっごーーい → すっごーい / すごい",
     options: &[[false, false], [true, false], [true, true]],

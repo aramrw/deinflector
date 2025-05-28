@@ -681,14 +681,14 @@ Rule {
     }
 }
 
-static ENGLISH_TRANSFORMS_DESCRIPTOR: LazyLock<LanguageTransformDescriptor> =
+pub static ENGLISH_TRANSFORMS_DESCRIPTOR: LazyLock<LanguageTransformDescriptor> =
     LazyLock::new(|| LanguageTransformDescriptor {
         language: "en",
         conditions: &EN_CONDITIONS_MAP,
         transforms: &EN_TRANSFORMS_MAP,
     });
 
-static EN_CONDITIONS_MAP: LazyLock<ConditionMap> = LazyLock::new(|| {
+pub static EN_CONDITIONS_MAP: LazyLock<ConditionMap> = LazyLock::new(|| {
     ConditionMap(IndexMap::from([
         (
             "v",

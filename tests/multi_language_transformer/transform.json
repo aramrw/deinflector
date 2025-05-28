@@ -1,0 +1,72 @@
+[
+  {
+    "text": "流れて",
+    "conditions": 0,
+    "trace": []
+  },
+  {
+    "text": "流れる",
+    "conditions": 3,
+    "trace": [
+      {
+        "transform": "-て",
+        "rule_index": 1,
+        "text": "流れて"
+      }
+    ]
+  },
+  {
+    "text": "流れつ",
+    "conditions": 28,
+    "trace": [
+      {
+        "transform": "imperative",
+        "rule_index": 6,
+        "text": "流れて"
+      }
+    ]
+  },
+  {
+    "text": "流れてる",
+    "conditions": 1,
+    "trace": [
+      {
+        "transform": "continuative",
+        "rule_index": 10,
+        "text": "流れて"
+      }
+    ]
+  },
+  {
+    "text": "流る",
+    "conditions": 7,
+    "trace": [
+      {
+        "transform": "potential",
+        "rule_index": 0,
+        "text": "流れる"
+      },
+      {
+        "transform": "-て",
+        "rule_index": 1,
+        "text": "流れて"
+      }
+    ]
+  },
+  {
+    "text": "流れつ",
+    "conditions": 4,
+    "trace": [
+      {
+        "transform": "potential",
+        "rule_index": 5,
+        "text": "流れてる"
+      },
+      {
+        "transform": "continuative",
+        "rule_index": 10,
+        "text": "流れて"
+      }
+    ]
+  }
+]
