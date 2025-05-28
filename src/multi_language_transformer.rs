@@ -7,12 +7,12 @@ use crate::{
 
 // key: language (ie: "en", "ja")
 // valueL LanguageTransformer
-pub(crate) struct MultiLanguageTransformer {
+pub struct MultiLanguageTransformer {
     inner: HashMap<&'static str, LanguageTransformer>,
 }
 
 impl MultiLanguageTransformer {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let mut mlt = Self {
             inner: HashMap::default(),
         };
