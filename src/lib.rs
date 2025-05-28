@@ -9,7 +9,7 @@ mod japanese;
 mod text_scanner;
 mod language_d;
 mod languages;
-mod multi_language_transformer;
+pub mod multi_language_transformer;
 mod text_preprocessors;
 mod text_processors;
 mod transformer;
