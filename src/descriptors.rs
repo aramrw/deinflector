@@ -33,10 +33,22 @@ pub struct LanguageDescriptor {
     pub language_transforms: Option<&'static LanguageTransformDescriptor>,
 }
 
+#[derive(Debug, Clone)]
+pub struct PreAndPostProcessors {
+    pub pre: Option<PreProcessors>,
+    pub post: Option<PostProcessors>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PreAndPostProcessorsWithId {
+    pub pre: Option<PreProcessorsWithId>,
+    pub post: Option<PostProcessorsWithId>,
+}
+
 type TextProcessorDescriptor<T, F> = HashMap<String, TextProcessor<T, F>>;
 
 #[derive(Debug, Clone)]
-struct CapitalizationPreProcessors {
+pub struct CapitalizationPreProcessors {
     decapitalize: TextProcessor<bool, bool>,
     capitalize_first_letter: TextProcessor<bool, bool>,
 }
@@ -55,18 +67,20 @@ pub struct AllTextProcessors {
 
 #[derive(Debug, Clone)]
 pub enum PreProcessors {
-    Ja(JapanesePreProcessors),
+    Ja(Box<JapanesePreProcessors>),
     En(CapitalizationPreProcessors),
 }
 #[derive(Debug, Clone)]
 pub enum PostProcessors {
     None,
 }
-
 #[derive(Debug, Clone)]
-pub struct PreAndPostProcessors {
-    pub pre: Option<PreProcessors>,
-    pub post: Option<PostProcessors>,
+pub enum PreProcessorsWithId {
+    None,
+}
+#[derive(Debug, Clone)]
+pub enum PostProcessorsWithId {
+    None,
 }
 
 #[derive(Debug, Clone)]
@@ -97,14 +111,14 @@ pub static LANGUAGE_DESCRIPTORS_MAP: LazyLock<IndexMap<&str, LanguageDescriptor>
                     is_text_lookup_worthy: Some(is_string_partially_japanese),
                     reading_normalizer: None,
                     text_processors: PreAndPostProcessors {
-                        pre: Some(PreProcessors::Ja(JapanesePreProcessors {
+                        pre: Some(PreProcessors::Ja(Box::new(JapanesePreProcessors {
                             convert_half_width_characters: CONVERT_HALF_WIDTH_CHARACTERS,
                             alphabetic_to_hiragana: ALPHABETIC_TO_HIRAGANA,
                             normalize_combining_characters: NORMALIZE_COMBINING_CHARACTERS,
                             alphanumeric_width_variants: ALPHANUMERIC_WIDTH_VARIANTS,
                             convert_hiragana_to_katakana: CONVERT_HIRAGANA_TO_KATAKANA,
                             collapse_emphatic_sequences: COLLAPSE_EMPHATIC_SEQUENCES,
-                        })),
+                        }))),
                         post: None,
                     },
                     language_transforms: Some(&*JAPANESE_TRANSFORMS_DESCRIPTOR),
