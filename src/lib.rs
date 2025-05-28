@@ -1,19 +1,19 @@
 #![allow(dead_code, unused_imports)]
 #![feature(type_alias_impl_trait)]
 
-mod cjk_utils;
-mod descriptors;
-mod en;
-mod ja;
-mod japanese;
-mod text_scanner;
-mod language_d;
-mod languages;
+pub mod cjk_utils;
+pub mod descriptors;
+pub mod en;
+pub mod ja;
+pub mod japanese;
+pub mod text_scanner;
+pub mod language_d;
+pub mod languages;
 pub mod multi_language_transformer;
-mod text_preprocessors;
-mod text_processors;
-mod transformer;
-mod transforms;
-mod wanakana;
+pub mod text_preprocessors;
+pub mod text_processors;
+pub mod transformer;
+pub mod transforms;
+pub mod wanakana;
 
 fn main() {}

@@ -6,21 +6,6 @@ trait TextProcessable<T> {
     fn process(str: &str, options: Vec<T>) -> String;
 }
 
-// impl TextProcessable<bool> for TextProcessor<'_, bool> {
-//     fn process(text: &str, setting: bool) -> String {
-//         if setting {
-//             let mut chars = text.chars();
-//             if let Some(first_char) = chars.next() {
-//                 format!("{}{}", first_char.to_uppercase(), chars.as_str())
-//             } else {
-//                 String::new()
-//             }
-//         } else {
-//             text.to_string()
-//         }
-//     }
-// }
-
 /// Text `pre-` & `post-`processors are used during the translation process to
 /// create alternate versions of the input text to search for.
 ///
