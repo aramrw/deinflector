@@ -52,8 +52,8 @@ pub struct PreAndPostProcessors {
 
 #[derive(Debug, Clone)]
 pub struct PreAndPostProcessorsWithId {
-    pub pre: Option<PreProcessorsWithId>,
-    pub post: Option<PostProcessorsWithId>,
+    pub pre: Vec<PreProcessorsWithId>,
+    pub post: Vec<PostProcessorsWithId>,
 }
 
 #[derive(Debug, Clone)]
