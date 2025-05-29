@@ -2,7 +2,8 @@ use crate::{
     japanese::{
         collapse_emphatic_sequences, convert_alphanumeric_to_fullwidth,
         convert_fullwidth_alphanumeric_to_normal, convert_halfwidth_kana_to_fullwidth,
-        convert_hiragana_to_katakana, convert_katakana_to_hiragana, normalize_combining_characters,
+        convert_hiragana_to_katakana, convert_katakana_to_hiragana,
+        normalize_cjk_compatibility_characters, normalize_combining_characters,
     },
     language_d::{
         BidirectionalConversionPreProcessor, BidirectionalPreProcessorOptions, TextProcessor,
@@ -10,6 +11,8 @@ use crate::{
     text_processors::BASIC_TEXT_PROCESSOR_OPTIONS,
     wanakana::convert_alphabetic_to_kana,
 };
+
+use kanji_processor::convert_variants;
 
 fn convert_half_width_characters_helper(text: &str, setting: bool) -> String {
     if setting {
@@ -86,7 +89,7 @@ fn collapse_emphatic_sequences_helper(text: &str, setting: [bool; 2]) -> String 
     let text = text.to_owned();
     let [collapse_emphatic, collapse_emphatic_full] = setting;
     if collapse_emphatic {
-        collapse_emphatic_sequences(text, collapse_emphatic_full)
+        collapse_emphatic_sequences(&text, collapse_emphatic_full)
     } else {
         text
     }
@@ -112,3 +115,36 @@ pub const NORMALIZE_COMBINING_CHARACTERS: TextProcessor<bool, bool> = TextProces
     options: &BASIC_TEXT_PROCESSOR_OPTIONS,
     process: normalize_combining_characters_helper,
 };
+
+fn normalize_cjk_compatibility_characters_helper(text: &str, setting: bool) -> String {
+    if setting {
+        // Assuming you have this function in your japanese.rs now
+        return normalize_cjk_compatibility_characters(text);
+    }
+    text.to_owned()
+}
+
+pub const NORMALIZE_CJK_COMPATIBILITY_CHARACTERS: TextProcessor<bool, bool> = TextProcessor {
+    name: "Normalize CJK Compatibility Characters",
+    description: "㌀ → アパート",
+    options: &BASIC_TEXT_PROCESSOR_OPTIONS,
+    process: normalize_cjk_compatibility_characters_helper,
+};
+
+fn standardize_kanji_helper(text: &str, setting: bool) -> String {
+    if setting {
+        return convert_variants(text);
+    }
+    text.to_owned()
+}
+
+pub const STANDARDIZE_KANJI: TextProcessor<bool, bool> = TextProcessor {
+    name: "Convert kanji variants to their modern standard form",
+    description: "萬 → 万",
+    options: &BASIC_TEXT_PROCESSOR_OPTIONS,
+    process: standardize_kanji_helper,
+};
+
+// You might also need NORMALIZE_RADICAL_CHARACTERS if you intend to keep it,
+// but it's not in the JS provided. If you want strict JS parity, remove it
+// from descriptors.rs. If you need it, you'll have to define it here.

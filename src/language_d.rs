@@ -15,17 +15,35 @@ trait TextProcessable<T> {
 /// When a language has multiple processors, the translator will generate
 /// variants of the text by applying all combinations of the processors.
 #[derive(Debug, Clone)]
-pub struct TextProcessor<O: 'static, S> {
+pub struct TextProcessor<Opts: 'static, Fn> {
     pub name: &'static str,
     pub description: &'static str,
-    pub options: &'static [O],
-    pub process: TextProcessorFP<S>,
+    pub options: &'static [Opts],
+    pub process: TextProcessorFn<Fn>,
 }
 
-pub type TextProcessorFP<T> = fn(&str, T) -> String;
+pub type TextProcessorFn<T> = fn(&str, T) -> String;
 
 /// Helper function to normalize .
 pub type ReadingNormalizer = fn(&str) -> String;
+
+#[derive(Debug, Clone)]
+pub enum AnyTextProcessor {
+    // Japanese Processors
+    ConvertHalfWidth(TextProcessor<bool, bool>),
+    AlphabeticToHiragana(TextProcessor<bool, bool>),
+    NormalizeCombiningCharacters(TextProcessor<bool, bool>),
+    NormalizeCjkCompatibilityCharacters(TextProcessor<bool, bool>),
+    NormalizeRadicalCharacters(TextProcessor<bool, bool>),
+    StandardizeKanji(TextProcessor<bool, bool>),
+    AlphanumericWidth(BidirectionalConversionPreProcessor),
+    HiraganaToKatakana(BidirectionalConversionPreProcessor),
+    CollapseEmphatic(TextProcessor<[bool; 2], [bool; 2]>),
+
+    // English Processors
+    Decapitalize(TextProcessor<bool, bool>),
+    CapitalizeFirst(TextProcessor<bool, bool>),
+}
 
 #[derive(Debug, Clone)]
 pub enum BidirectionalPreProcessorOptions {
@@ -37,10 +55,12 @@ pub enum BidirectionalPreProcessorOptions {
 pub type BidirectionalConversionPreProcessor =
     TextProcessor<BidirectionalPreProcessorOptions, BidirectionalPreProcessorOptions>;
 
-pub struct LanguageAndProcessors<O: 'static, S> {
+pub enum AllTextProcessorsEnum {}
+
+pub struct LanguageAndProcessors {
     pub iso: String,
-    pub text_preprocessors: Option<Vec<TextProcessorWithId<O, S>>>,
-    pub text_postprocessors: Option<Vec<TextProcessorWithId<O, S>>>,
+    pub preprocessors: Vec<TextProcessorWithId>,
+    pub postprocessors: Vec<TextProcessorWithId>,
 }
 
 pub struct LanguageAndReadingNormalizer {
@@ -48,14 +68,15 @@ pub struct LanguageAndReadingNormalizer {
     pub reading_normalizer: ReadingNormalizer,
 }
 
+#[derive(Debug, Clone)]
+pub struct TextProcessorWithId {
+    pub id: &'static str,
+    pub processor: AnyTextProcessor,
+}
+
 pub struct LanguageAndTransforms {
     pub iso: &'static str,
     pub language_transforms: LanguageTransformDescriptor,
-}
-
-pub struct TextProcessorWithId<O: 'static, S> {
-    pub id: String,
-    pub text_processor: TextProcessor<O, S>,
 }
 
 #[derive(Debug, Clone)]

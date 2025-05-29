@@ -11,14 +11,17 @@ pub struct MultiLanguageTransformer {
     inner: HashMap<&'static str, LanguageTransformer>,
 }
 
-impl MultiLanguageTransformer {
-    pub fn new() -> Self {
+impl Default for MultiLanguageTransformer {
+    fn default() -> Self {
         let mut mlt = Self {
             inner: HashMap::default(),
         };
         mlt.prepare();
         mlt
     }
+}
+
+impl MultiLanguageTransformer {
     fn prepare(&mut self) {
         let langs = get_all_language_transform_descriptors();
         for transforms in langs {
@@ -103,7 +106,7 @@ mod mlt {
     fn transform() {
         let json: &str = include_str!("../tests/multi_language_transformer/transform.json");
         let expected: Vec<TransformedText> = serde_json::from_str(json).unwrap();
-        let mlt = MultiLanguageTransformer::new();
+        let mlt = MultiLanguageTransformer::default();
         let res = mlt.transform("ja", "流れて");
         passert_eq!(res, expected);
         dbg!(res);

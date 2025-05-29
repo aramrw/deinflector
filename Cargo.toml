@@ -19,4 +19,6 @@ thiserror = "*"
 unicode-normalization = "0.1.24"
 unicode-segmentation = "1.12.0"
 wana_kana = "4.0.0"
-strace = {git = "https://github.com/aramrw/strace", branch = "0.0.3"}
+# git repos
+strace = { git = "https://github.com/aramrw/strace", branch = "0.0.3" }
+kanji_processor = { git = "https://github.com/aramrw/yomichan_rs.git", branch = "master", package = "kanji_processor" }

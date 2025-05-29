@@ -1,7 +1,10 @@
 use fancy_regex::Regex;
 use unicode_normalization::UnicodeNormalization;
 
-use crate::language_d::TextProcessor;
+use crate::{
+    cjk_utils::{is_code_point_in_ranges, CJK_RADICALS_RANGES},
+    language_d::TextProcessor,
+};
 
 pub const BASIC_TEXT_PROCESSOR_OPTIONS: [bool; 2] = [false, true];
 
@@ -57,4 +60,32 @@ pub const REMOVE_ALPHABETIC_DIACRITICS: TextProcessor<bool, bool> = TextProcesso
     description: "ἄήé → αηe",
     options: &BASIC_TEXT_PROCESSOR_OPTIONS,
     process: remove_alphabetic_diacritics,
+};
+
+pub fn normalize_radicals(text: &str) -> String {
+    text.chars()
+        .map(|c| {
+            let code_point = c as u32;
+            if is_code_point_in_ranges(code_point, &CJK_RADICALS_RANGES) {
+                // Use NFKD normalization, same as JS
+                c.nfkd().collect::<String>()
+            } else {
+                c.to_string()
+            }
+        })
+        .collect()
+}
+
+fn normalize_radical_characters_helper(text: &str, setting: bool) -> String {
+    if setting {
+        return normalize_radicals(text);
+    }
+    text.to_owned()
+}
+
+pub const NORMALIZE_RADICAL_CHARACTERS: TextProcessor<bool, bool> = TextProcessor {
+    name: "Normalize radical characters",
+    description: "⼀ → 一 (U+2F00 → U+4E00)",
+    options: &BASIC_TEXT_PROCESSOR_OPTIONS,
+    process: normalize_radical_characters_helper,
 };

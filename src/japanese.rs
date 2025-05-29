@@ -4,11 +4,13 @@ use std::{
     sync::LazyLock,
 };
 
-use crate::{
-    cjk_utils::{
-        is_code_point_in_range, is_code_point_in_ranges, CodepointRange, CJK_IDEOGRAPH_RANGES,
-    },
-    descriptors::collect_graphemes,
+// NOTE: You will need to add `unicode_normalization = "0.1.22"` (or latest) to your Cargo.toml
+use unicode_normalization::UnicodeNormalization;
+
+// Import from the (now fixed) cjk_utils
+use crate::cjk_utils::{
+    is_code_point_in_range, is_code_point_in_ranges, CodepointRange, CJK_IDEOGRAPH_RANGES,
+    CJK_COMPATIBILITY_IDEOGRAPHS_RANGE,
 };
 
 pub const HIRAGANA_SMALL_TSU_CODE_POINT: u32 = 0x3063;
@@ -25,28 +27,36 @@ pub const KATAKANA_RANGE: CodepointRange = (0x30a0, 0x30ff);
 
 pub const KANA_RANGES: &[CodepointRange] = &[HIRAGANA_RANGE, KATAKANA_RANGE];
 
-pub const JP_RANGES_BASE: [CodepointRange; 14] = [
-    HIRAGANA_RANGE,
-    KATAKANA_RANGE,
-    (0xff66, 0xff9f), // Halfwidth katakana
-    (0x30fb, 0x30fc), // Katakana punctuation
-    (0xff61, 0xff65), // Kana punctuation
-    (0x3000, 0x303f), // CJK punctuation
-    (0xff10, 0xff19), // Fullwidth numbers
-    (0xff21, 0xff3a), // Fullwidth upper case Latin letters
-    (0xff41, 0xff5a), // Fullwidth lower case Latin letters
-    (0xff01, 0xff0f), // Fullwidth punctuation 1
-    (0xff1a, 0xff1f), // Fullwidth punctuation 2
-    (0xff3b, 0xff3f), // Fullwidth punctuation 3
-    (0xff5b, 0xff60), // Fullwidth punctuation 4
-    (0xffe0, 0xffee), // Currency markers
-];
-
-pub static JAPANESE_RANGES: LazyLock<[CodepointRange; 26]> = LazyLock::new(|| {
-    let mut combined: [CodepointRange; 26] = [(0, 0); 26];
-    combined[..14].copy_from_slice(&JP_RANGES_BASE);
-    combined[14..].copy_from_slice(&CJK_IDEOGRAPH_RANGES);
-    combined
+// Matches JS order and content
+pub static JAPANESE_RANGES: LazyLock<Vec<CodepointRange>> = LazyLock::new(|| {
+    vec![
+        HIRAGANA_RANGE,
+        KATAKANA_RANGE,
+        CJK_IDEOGRAPH_RANGES[0], // CJK Unified
+        CJK_IDEOGRAPH_RANGES[1], // CJK Unified Ext A
+        CJK_IDEOGRAPH_RANGES[2], // CJK Unified Ext B
+        CJK_IDEOGRAPH_RANGES[3], // CJK Unified Ext C
+        CJK_IDEOGRAPH_RANGES[4], // CJK Unified Ext D
+        CJK_IDEOGRAPH_RANGES[5], // CJK Unified Ext E
+        CJK_IDEOGRAPH_RANGES[6], // CJK Unified Ext F
+        CJK_IDEOGRAPH_RANGES[7], // CJK Unified Ext G
+        CJK_IDEOGRAPH_RANGES[8], // CJK Unified Ext H
+        CJK_IDEOGRAPH_RANGES[9], // CJK Unified Ext I
+        (0xff66, 0xff9f), // Halfwidth katakana
+        (0x30fb, 0x30fc), // Katakana punctuation
+        (0xff61, 0xff65), // Kana punctuation
+        (0x3000, 0x303f), // CJK punctuation
+        (0xff10, 0xff19), // Fullwidth numbers
+        (0xff21, 0xff3a), // Fullwidth upper case Latin letters
+        (0xff41, 0xff5a), // Fullwidth lower case Latin letters
+        (0xff01, 0xff0f), // Fullwidth punctuation 1
+        (0xff1a, 0xff1f), // Fullwidth punctuation 2
+        (0xff3b, 0xff3f), // Fullwidth punctuation 3
+        (0xff5b, 0xff60), // Fullwidth punctuation 4
+        (0xffe0, 0xffee), // Currency markers
+        CJK_IDEOGRAPH_RANGES[10], // CJK Compatibility
+        CJK_IDEOGRAPH_RANGES[11], // CJK Compatibility Sup
+    ]
 });
 
 pub static SMALL_KANA_SET: LazyLock<HashSet<char>> = LazyLock::new(|| {
@@ -56,19 +66,22 @@ pub static SMALL_KANA_SET: LazyLock<HashSet<char>> = LazyLock::new(|| {
     ])
 });
 
+// Fixed to match JS structure with '---' placeholders
 #[rustfmt::skip]
 pub static HALFWIDTH_KATAKANA_MAP: LazyLock<HashMap<char, &str>> = LazyLock::new(|| {
     HashMap::from([
-        ('･', "・"),('ｦ', "ヲヺ"),('ｧ', "ァ"),('ｨ', "ィ"),('ｩ', "ゥ"),('ｪ', "ェ"),
-        ('ｫ', "ォ"),('ｬ', "ャ"),('ｭ', "ュ"),('ｮ', "ョ"),('ｯ', "ッ"),('ｰ', "ー"),
-        ('ｱ', "ア"),('ｲ', "イ"),('ｳ', "ウヴ"),('ｴ', "エ"),('ｵ', "オ"),('ｶ', "カガ"),
-        ('ｷ', "キギ"),('ｸ', "クグ"),('ｹ', "ケゲ"),('ｺ', "コゴ"),('ｻ', "サザ"),
-        ('ｼ', "シジ"),('ｽ', "スズ"),('ｾ', "セゼ"),('ｿ', "ソゾ"),('ﾀ', "タダ"),('ﾁ', "チヂ"),
-        ('ﾂ', "ツヅ"),('ﾃ', "テデ"),('ﾄ', "トド"),('ﾅ', "ナ"),('ﾆ', "ニ"),('ﾇ', "ヌ"),
-        ('ﾈ', "ネ"),('ﾉ', "ノ"),('ﾊ', "ハバパ"),('ﾋ', "ヒビピ"),('ﾌ', "フブプ"),
-        ('ﾍ', "ヘベペ"),('ﾎ', "ホボポ"),('ﾏ', "マ"),('ﾐ', "ミ"),('ﾑ', "ム"),
-        ('ﾒ', "メ"),('ﾓ', "モ"),('ﾔ', "ヤ"),('ﾕ', "ユ"),('ﾖ', "ヨ"),('ﾗ', "ラ"),
-        ('ﾘ', "リ"),('ﾙ', "ル"),('ﾚ', "レ"),('ﾛ', "ロ"),('ﾜ', "ワ"),('ﾝ', "ン"),
+        ('･', "・--"), ('ｦ', "ヲヺ-"), ('ｧ', "ァ--"), ('ｨ', "ィ--"), ('ｩ', "ゥ--"),
+        ('ｪ', "ェ--"), ('ｫ', "ォ--"), ('ｬ', "ャ--"), ('ｭ', "ュ--"), ('ｮ', "ョ--"),
+        ('ｯ', "ッ--"), ('ｰ', "ー--"), ('ｱ', "ア--"), ('ｲ', "イ--"), ('ｳ', "ウヴ-"),
+        ('ｴ', "エ--"), ('ｵ', "オ--"), ('ｶ', "カガ-"), ('ｷ', "キギ-"), ('ｸ', "クグ-"),
+        ('ｹ', "ケゲ-"), ('ｺ', "コゴ-"), ('ｻ', "サザ-"), ('ｼ', "シジ-"), ('ｽ', "スズ-"),
+        ('ｾ', "セゼ-"), ('ｿ', "ソゾ-"), ('ﾀ', "タダ-"), ('ﾁ', "チヂ-"), ('ﾂ', "ツヅ-"),
+        ('ﾃ', "テデ-"), ('ﾄ', "トド-"), ('ﾅ', "ナ--"), ('ﾆ', "ニ--"), ('ﾇ', "ヌ--"),
+        ('ﾈ', "ネ--"), ('ﾉ', "ノ--"), ('ﾊ', "ハバパ"), ('ﾋ', "ヒビピ"), ('ﾌ', "フブプ"),
+        ('ﾍ', "ヘベペ"), ('ﾎ', "ホボポ"), ('ﾏ', "マ--"), ('ﾐ', "ミ--"), ('ﾑ', "ム--"),
+        ('ﾒ', "メ--"), ('ﾓ', "モ--"), ('ﾔ', "ヤ--"), ('ﾕ', "ユ--"), ('ﾖ', "ヨ--"),
+        ('ﾗ', "ラ--"), ('ﾘ', "リ--"), ('ﾙ', "ル--"), ('ﾚ', "レ--"), ('ﾛ', "ロ--"),
+        ('ﾜ', "ワ--"), ('ﾝ', "ン--"),
     ])
 });
 
@@ -94,14 +107,14 @@ pub static KANA_TO_VOWEL_MAPPING: LazyLock<HashMap<char, char>> = LazyLock::new(
     map
 });
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FuriganaGroup {
     pub is_kana: bool,
     pub text: String,
     pub text_normalized: Option<String>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FuriganaSegment {
     pub text: String,
     pub reading: Option<String>,
@@ -109,10 +122,12 @@ pub struct FuriganaSegment {
 
 impl FuriganaSegment {
     pub fn create_furigana_segment(text: String, reading: Option<String>) -> Self {
-        Self { text, reading }
+        let final_reading = reading.and_then(|r| if r.is_empty() { None } else { Some(r) });
+        Self { text, reading: final_reading }
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum PitchCategory {
     Heiban,
     Kifuku,
@@ -121,12 +136,13 @@ pub enum PitchCategory {
     Nakadaka,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DiacriticType {
     Dakuten,
     Handakuten,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DiacriticInfo {
     pub character: char,
     pub diacritic_type: DiacriticType,
@@ -138,298 +154,42 @@ pub static DIACRITIC_MAPPING: LazyLock<HashMap<char, DiacriticInfo>> = LazyLock:
     let chars: Vec<char> = KANA.chars().collect();
     for chunk in chars.chunks(3) {
         if let [character, dakuten, handakuten] = *chunk {
-            map.insert(
-                dakuten,
-                DiacriticInfo {
-                    character,
-                    diacritic_type: DiacriticType::Dakuten,
-                },
-            );
+            map.insert(dakuten, DiacriticInfo { character, diacritic_type: DiacriticType::Dakuten });
             if handakuten != '-' {
-                map.insert(
-                    handakuten,
-                    DiacriticInfo {
-                        character,
-                        diacritic_type: DiacriticType::Handakuten,
-                    },
-                );
+                map.insert(handakuten, DiacriticInfo { character, diacritic_type: DiacriticType::Handakuten });
             }
         }
     }
     map
 });
 
+// Fixed to match JS logic and return Option<char>
 fn get_prolonged_hiragana(prev_char: char) -> Option<char> {
-    if let Some(char) = KANA_TO_VOWEL_MAPPING.get(&prev_char) {
-        match char {
-            'a' => Some(String::from('あ')),
-            'e' => Some(String::from('い')),
-            'i' => Some(String::from('う')),
-            'o' => Some(String::from('え')),
-            'u' => Some(String::from('う')),
-            _ => None,
-        };
-    }
-    None
-}
-
-fn create_furigana_segment(text: String, reading: String) -> FuriganaSegment {
-    FuriganaSegment {
-        text,
-        reading: Some(reading),
+    match KANA_TO_VOWEL_MAPPING.get(&prev_char) {
+        Some('a') => Some('あ'),
+        Some('i') => Some('い'),
+        Some('u') => Some('う'),
+        Some('e') => Some('え'),
+        Some('o') => Some('う'), // 'o' prolongs to 'う'
+        _ => None,
     }
 }
 
-pub trait Unicode16 {
-    fn code_point_at(&self, index: usize) -> Option<u32>;
-}
-
-impl Unicode16 for str {
-    fn code_point_at(&self, index: usize) -> Option<u32> {
-        if index >= self.len() {
-            return None;
-        }
-
-        let mut char_indices = self.char_indices();
-        // Find the character at the given byte index
-        if let Some((_, ch)) = char_indices.nth(index) {
-            // Encode the character to UTF-16 and handle surrogate pairs
-            let mut utf16_units = [0u16; 2];
-            let encoded_units = ch.encode_utf16(&mut utf16_units);
-            if encoded_units.len() == 1 {
-                Some(utf16_units[0] as u32)
-            } else {
-                // Handle surrogate pair
-                let high_surrogate = utf16_units[0] as u32;
-                let low_surrogate = utf16_units[1] as u32;
-                Some(0x10000 + ((high_surrogate - 0xD800) << 10) + (low_surrogate - 0xDC00))
-            }
-        } else {
-            None
-        }
-    }
-}
-
-impl Unicode16 for char {
-    fn code_point_at(&self, index: usize) -> Option<u32> {
-        if index > 0 {
-            // For a single `char`, the index can only be 0
-            return None;
-        }
-
-        // Encode the character to UTF-16 and handle surrogate pairs
-        let mut utf16_units = [0u16; 2];
-        let encoded_units = self.encode_utf16(&mut utf16_units);
-        if encoded_units.len() == 1 {
-            Some(utf16_units[0] as u32)
-        } else {
-            // Handle surrogate pair
-            let high_surrogate = utf16_units[0] as u32;
-            let low_surrogate = utf16_units[1] as u32;
-            Some(0x10000 + ((high_surrogate - 0xD800) << 10) + (low_surrogate - 0xDC00))
-        }
-    }
-}
-
-// instead of storing functions
-// impl them to a trait
-// struct JaPreTextProcessors {
-//     convert_half_width_characters: ConvertHalfWidthCharacters,
-//     alphabetic_to_hiragana: AlphabeticToHiragana,
-//     normalize_combining_characters: NormalizeCombiningCharacters,
-//     alphanumeric_width_variants: AlphanumericWidthVariants,
-//     // convert_hiragana_to_katakana: convert_hiragana_to_katakana, // completed
-//     collapse_emphatic_sequences: CollapseEmphaticSequences,
-// }
-//
-// pub struct JaTextProcessors {
-//     pre: JaPreTextProcessors,
-// }
-
-///  An optional function which returns whether or not a given string may be translatable.
-///
-///  This is used as a filter for several situations, such as whether the clipboard monitor
-///  window should activate when text is copied to the clipboard.
-///  If no value is provided, `true` is assumed for all inputs.
-fn is_lookup_worthy(str: &str) -> bool {
-    let g = collect_graphemes(str);
-    if g.is_empty() {
-        return false;
-    }
-    for c in g {
-        if let Some(c_point) = c.code_point_at(0) {
-            if is_code_point_in_ranges(c_point, &*JAPANESE_RANGES) {
-                return true;
-            }
-        }
-    }
-    false
-}
-
-// fn get_prolonged_hiragana(ch: char) -> Option<char> {
-//     let hiragana_prolonged_map: std::collections::HashMap<char, char> = [
-//         ('あ', 'あ'),
-//         ('い', 'い'),
-//         ('う', 'う'),
-//         ('え', 'え'),
-//         ('お', 'お'),
-//         ('か', 'あ'),
-//         ('き', 'い'),
-//         ('く', 'う'),
-//         ('け', 'え'),
-//         ('こ', 'お'),
-//         // Add more mappings as needed
-//     ]
-//     .iter()
-//     .cloned()
-//     .collect();
-//
-//     hiragana_prolonged_map.get(&ch).cloned()
-// }
-
-fn segmentize_furigana(
-    reading: String,
-    reading_normalized: String,
-    groups: &[FuriganaGroup],
-    groups_start: usize,
-) -> Option<Vec<FuriganaSegment>> {
-    let group_count = groups.len().saturating_sub(groups_start);
-    if group_count == 0 {
-        return if reading.is_empty() {
-            Some(vec![])
-        } else {
-            None
-        };
-    }
-
-    let group = &groups[groups_start];
-    let FuriganaGroup {
-        is_kana,
-        text,
-        text_normalized,
-    } = group;
-    let text_length = text.len();
-
-    if *is_kana {
-        if let Some(text_normalized) = text_normalized {
-            if reading_normalized.starts_with(text_normalized) {
-                if let Some(mut segments) = segmentize_furigana(
-                    reading[text_length..].to_string(),
-                    reading_normalized[text_length..].to_string(),
-                    groups,
-                    groups_start + 1,
-                ) {
-                    if reading.starts_with(text) {
-                        segments.insert(
-                            0,
-                            FuriganaSegment::create_furigana_segment(text.clone(), None),
-                        );
-                    } else {
-                        segments.splice(0..0, get_furigana_kana_segments(text, &reading));
-                    }
-                    return Some(segments);
-                }
-            }
-        }
-        None
-    } else {
-        let mut result = None;
-        for i in (text_length..=reading.len()).rev() {
-            if let Some(mut segments) = segmentize_furigana(
-                reading[i..].to_string(),
-                reading_normalized[i..].to_string(),
-                groups,
-                groups_start + 1,
-            ) {
-                if result.is_some() {
-                    // More than one way to segmentize the tail; mark as ambiguous
-                    return None;
-                }
-                let segment_reading = &reading[..i];
-                segments.insert(
-                    0,
-                    FuriganaSegment::create_furigana_segment(
-                        text.clone(),
-                        Some(segment_reading.to_string()),
-                    ),
-                );
-                result = Some(segments);
-
-                // There is only one way to segmentize the last non-kana group
-                if group_count == 1 {
-                    break;
-                }
-            }
-        }
-        result
-    }
-}
-
-fn get_furigana_kana_segments(text: &str, reading: &str) -> Vec<FuriganaSegment> {
-    let text_len = text.len();
-    let mut new_segments: Vec<FuriganaSegment> = Vec::new();
-    let mut start = 0;
-    let mut state =
-        text.chars().next().unwrap_or_default() == reading.chars().next().unwrap_or_default();
-
-    for i in 1..text_len {
-        let new_state =
-            text.chars().nth(i).unwrap_or_default() == reading.chars().nth(i).unwrap_or_default();
-        if state == new_state {
-            continue;
-        }
-        new_segments.push(FuriganaSegment::create_furigana_segment(
-            text[start..i].to_string(),
-            if state {
-                None
-            } else {
-                Some(reading[start..i].to_string())
-            },
-        ));
-        state = new_state;
-        start = i;
-    }
-    new_segments.push(FuriganaSegment::create_furigana_segment(
-        text[start..text_len].to_string(),
-        if state {
-            None
-        } else {
-            Some(reading[start..text_len].to_string())
-        },
-    ));
-    new_segments
-}
-
-pub fn get_stem_length<T: AsRef<str>>(text1: T, text2: T) -> u32 {
+// O(n) implementation returning byte length of common char prefix
+pub fn get_stem_length<T: AsRef<str>>(text1: T, text2: T) -> usize {
     let text1 = text1.as_ref();
     let text2 = text2.as_ref();
-    let min_len = cmp::min(text1.len(), text2.len());
-    if min_len == 0 {
-        return 0;
-    }
+    text1.chars()
+        .zip(text2.chars())
+        .take_while(|(c1, c2)| c1 == c2)
+        .map(|(c1, _)| c1.len_utf8())
+        .sum()
+}
 
-    let mut i = 0;
-    loop {
-        let char1 = text1.code_point_at(i);
-        let char2 = text2.code_point_at(i);
-        if char1 != char2 {
-            break;
-        }
-        let char_len = char1
-            .map(|cp| {
-                let mut buffer = [0u16; 2];
-                char::from_u32(cp).unwrap().encode_utf16(&mut buffer).len()
-            })
-            .unwrap_or(0);
-        i += char_len;
-        if i >= min_len {
-            if i > min_len {
-                i -= char_len; // Don't consume partial UTF16 surrogate characters
-            }
-            break;
-        }
-    }
-    i as u32
+// Character code testing functions
+
+pub fn is_code_point_kanji(code_point: u32) -> bool {
+    is_code_point_in_ranges(code_point, &CJK_IDEOGRAPH_RANGES)
 }
 
 pub fn is_code_point_kana(code_point: u32) -> bool {
@@ -437,33 +197,21 @@ pub fn is_code_point_kana(code_point: u32) -> bool {
 }
 
 pub fn is_code_point_japanese(code_point: u32) -> bool {
-    is_code_point_in_ranges(code_point, &*JAPANESE_RANGES)
+    is_code_point_in_ranges(code_point, &JAPANESE_RANGES)
 }
+
+// String testing functions
 
 pub fn is_string_entirely_kana<T: AsRef<str>>(str: T) -> bool {
     let str = str.as_ref();
-    if str.is_empty() {
-        return false;
-    }
-    for c in str.chars() {
-        if !is_code_point_in_ranges(c.code_point_at(0).unwrap_or_default(), KANA_RANGES) {
-            return false;
-        }
-    }
-    true
+    !str.is_empty() && str.chars().all(|c| is_code_point_kana(c as u32))
 }
 
 pub fn is_string_partially_japanese(str: &str) -> bool {
-    if str.is_empty() {
-        return false;
-    }
-    for c in str.chars() {
-        if is_code_point_in_ranges(c.code_point_at(0).unwrap_or_default(), &*JAPANESE_RANGES) {
-            return true;
-        }
-    }
-    false
+    !str.is_empty() && str.chars().any(|c| is_code_point_japanese(c as u32))
 }
+
+// Mora functions
 
 pub fn is_mora_pitch_high(mora_index: usize, pitch_accent_downstep_position: usize) -> bool {
     match pitch_accent_downstep_position {
@@ -474,7 +222,7 @@ pub fn is_mora_pitch_high(mora_index: usize, pitch_accent_downstep_position: usi
 }
 
 pub fn get_pitch_category(
-    text: String,
+    text: &str,
     pitch_accent_downstep_position: usize,
     is_verb_or_adjective: bool,
 ) -> Option<PitchCategory> {
@@ -482,31 +230,27 @@ pub fn get_pitch_category(
         return Some(PitchCategory::Heiban);
     }
     if is_verb_or_adjective {
-        if pitch_accent_downstep_position > 0 {
-            return Some(PitchCategory::Kifuku);
-        }
-        return None;
+        return if pitch_accent_downstep_position > 0 { Some(PitchCategory::Kifuku) } else { None };
     }
     if pitch_accent_downstep_position == 1 {
         return Some(PitchCategory::Atamadaka);
     }
     if pitch_accent_downstep_position > 1 {
-        if pitch_accent_downstep_position >= get_kana_mora_count(text).into() {
-            return Some(PitchCategory::Odaka);
-        }
-        return Some(PitchCategory::Nakadaka);
+        return if pitch_accent_downstep_position >= get_kana_mora_count(text) as usize {
+            Some(PitchCategory::Odaka)
+        } else {
+            Some(PitchCategory::Nakadaka)
+        };
     }
     None
 }
 
-fn get_kana_morae<T: AsRef<str>>(text: T) -> Vec<String> {
+pub fn get_kana_morae<T: AsRef<str>>(text: T) -> Vec<String> {
     let text = text.as_ref();
     let mut morae: Vec<String> = Vec::new();
     for char in text.chars() {
         if SMALL_KANA_SET.contains(&char) && !morae.is_empty() {
-            if let Some(last) = morae.last_mut() {
-                last.push(char);
-            }
+            morae.last_mut().unwrap().push(char);
         } else {
             morae.push(char.to_string());
         }
@@ -515,15 +259,16 @@ fn get_kana_morae<T: AsRef<str>>(text: T) -> Vec<String> {
 }
 
 pub fn get_kana_mora_count<T: AsRef<str>>(text: T) -> u16 {
-    let text = text.as_ref();
     let mut mora_count: u16 = 0;
-    for c in text.chars() {
-        if SMALL_KANA_SET.get(&c).is_none() || mora_count == 0 {
+    for c in text.as_ref().chars() {
+        if !(SMALL_KANA_SET.contains(&c) && mora_count > 0) {
             mora_count += 1;
         }
     }
     mora_count
 }
+
+// Conversion functions
 
 pub fn convert_katakana_to_hiragana<T: AsRef<str>>(
     text: T,
@@ -531,269 +276,296 @@ pub fn convert_katakana_to_hiragana<T: AsRef<str>>(
 ) -> String {
     let mut result = String::new();
     let text = text.as_ref();
-    let offset = HIRAGANA_CONVERSION_RANGE.0 - KATAKANA_CONVERSION_RANGE.0;
+    let offset = HIRAGANA_CONVERSION_RANGE.0 as i32 - KATAKANA_CONVERSION_RANGE.0 as i32;
 
     for char in text.chars() {
-        let mut converted_char = char;
-        if let Some(code_point) = char.code_point_at(0) {
-            match code_point {
-                KATAKANA_SMALL_KA_CODE_POINT | KATAKANA_SMALL_KE_CODE_POINT => {
-                    // No change
-                }
-                KANA_PROLONGED_SOUND_MARK_CODE_POINT => {
-                    if !keep_prolonged_sound_marks && !result.is_empty() {
-                        if let Some(char2) = get_prolonged_hiragana(result.chars().last().unwrap())
-                        {
-                            converted_char = char2;
-                        }
-                    }
-                }
-                _ => {
-                    if is_code_point_in_range(code_point, KATAKANA_CONVERSION_RANGE) {
-                        if let Some(new_char) = std::char::from_u32(code_point + offset) {
-                            converted_char = new_char;
+        let code_point = char as u32;
+        let mut processed_char = char;
+
+        match code_point {
+            KATAKANA_SMALL_KA_CODE_POINT | KATAKANA_SMALL_KE_CODE_POINT => {}
+            KANA_PROLONGED_SOUND_MARK_CODE_POINT => {
+                if !keep_prolonged_sound_marks && !result.is_empty() {
+                    if let Some(last_char) = result.chars().last() {
+                        if let Some(prolonged) = get_prolonged_hiragana(last_char) {
+                            processed_char = prolonged;
                         }
                     }
                 }
             }
+            _ => {
+                if is_code_point_in_range(code_point, KATAKANA_CONVERSION_RANGE) {
+                    if let Some(new_char) = std::char::from_u32((code_point as i32 + offset) as u32) {
+                        processed_char = new_char;
+                    }
+                }
+            }
         }
-        result.push(converted_char);
+        result.push(processed_char);
     }
-
     result
 }
 
 pub fn convert_hiragana_to_katakana<T: AsRef<str>>(text: T) -> String {
     let mut result = String::new();
     let text = text.as_ref();
-    let offset = KATAKANA_CONVERSION_RANGE.0 - HIRAGANA_CONVERSION_RANGE.0;
+    let offset = KATAKANA_CONVERSION_RANGE.0 as i32 - HIRAGANA_CONVERSION_RANGE.0 as i32;
 
     for char in text.chars() {
-        let mut converted_char = char;
-        if let Some(code_point) = char.code_point_at(0) {
-            if is_code_point_in_range(code_point, HIRAGANA_CONVERSION_RANGE) {
-                if let Some(new_char) = std::char::from_u32(code_point + offset) {
-                    converted_char = new_char;
-                }
+        let code_point = char as u32;
+        let mut processed_char = char;
+        if is_code_point_in_range(code_point, HIRAGANA_CONVERSION_RANGE) {
+            if let Some(new_char) = std::char::from_u32((code_point as i32 + offset) as u32) {
+                processed_char = new_char;
             }
         }
-        result.push(converted_char);
+        result.push(processed_char);
     }
-
     result
 }
 
 pub fn convert_alphanumeric_to_fullwidth<T: AsRef<str>>(text: T) -> String {
-    let text = text.as_ref();
-    let mut result = String::new();
-
-    for char in text.chars() {
-        if let Some(mut code_point) = char.code_point_at(0) {
-            if (0x30..=0x39).contains(&code_point) {
-                // ['0', '9']
-                code_point += 0xff10 - 0x30; // 0xff10 = '0' full width
-            } else if (0x41..=0x5a).contains(&code_point) {
-                // ['A', 'Z']
-                code_point += 0xff21 - 0x41; // 0xff21 = 'A' full width
-            } else if (0x61..=0x7a).contains(&code_point) {
-                // ['a', 'z']
-                code_point += 0xff41 - 0x61; // 0xff41 = 'a' full width
-            }
-            if let Some(new_char) = std::char::from_u32(code_point) {
-                result.push(new_char);
-            } else {
-                result.push(char);
-            }
-        } else {
-            result.push(char);
+    text.as_ref().chars().map(|c| {
+        let cp = c as u32;
+        match cp {
+            0x30..=0x39 => std::char::from_u32(cp + 0xff10 - 0x30).unwrap_or(c),
+            0x41..=0x5a => std::char::from_u32(cp + 0xff21 - 0x41).unwrap_or(c),
+            0x61..=0x7a => std::char::from_u32(cp + 0xff41 - 0x61).unwrap_or(c),
+            _ => c,
         }
-    }
-
-    result
+    }).collect()
 }
 
 pub fn convert_fullwidth_alphanumeric_to_normal<T: AsRef<str>>(text: T) -> String {
-    let text = text.as_ref();
-    let mut result = String::new();
-
-    for char in text.chars() {
-        if let Some(mut code_point) = char.code_point_at(0) {
-            if (0xff10..=0xff19).contains(&code_point) {
-                // ['０', '９']
-                code_point -= 0xff10 - 0x30; // 0x30 = '0'
-            } else if (0xff21..=0xff3a).contains(&code_point) {
-                // ['Ａ', 'Ｚ']
-                code_point -= 0xff21 - 0x41; // 0x41 = 'A'
-            } else if (0xff41..=0xff5a).contains(&code_point) {
-                // ['ａ', 'ｚ']
-                code_point -= 0xff41 - 0x61; // 0x61 = 'a'
-            }
-            if let Some(new_char) = std::char::from_u32(code_point) {
-                result.push(new_char);
-            } else {
-                result.push(char);
-            }
-        } else {
-            result.push(char);
+    text.as_ref().chars().map(|c| {
+        let cp = c as u32;
+        match cp {
+            0xff10..=0xff19 => std::char::from_u32(cp - (0xff10 - 0x30)).unwrap_or(c),
+            0xff21..=0xff3a => std::char::from_u32(cp - (0xff21 - 0x41)).unwrap_or(c),
+            0xff41..=0xff5a => std::char::from_u32(cp - (0xff41 - 0x61)).unwrap_or(c),
+            _ => c,
         }
-    }
-
-    result
+    }).collect()
 }
 
 pub fn convert_halfwidth_kana_to_fullwidth(text: &str) -> String {
     let mut result = String::new();
+    let mut chars = text.chars().peekable();
 
-    let mut i = 0;
-    let text_chars: Vec<char> = text.chars().collect();
-    while i < text_chars.len() {
-        let c = text_chars[i];
-        let mapping = HALFWIDTH_KATAKANA_MAP.get(&c);
-        if mapping.is_none() {
-            result.push(c);
-            i += 1;
-            continue;
-        }
-
-        let mapping = mapping.unwrap();
-        let mut index = 0;
-        if i + 1 < text_chars.len() {
-            match text_chars[i + 1].code_point_at(0).unwrap_or_default() {
-                0xff9e => {
-                    // Dakuten
-                    index = 1;
+    while let Some(c) = chars.next() {
+        if let Some(mapping_str) = HALFWIDTH_KATAKANA_MAP.get(&c) {
+            let mut index = 0;
+            if let Some(&next_char) = chars.peek() {
+                match next_char as u32 {
+                    0xff9e => index = 1, // Dakuten
+                    0xff9f => index = 2, // Handakuten
+                    _ => {}
                 }
-                0xff9f => {
-                    // Handakuten
-                    index = 2;
-                }
-                _ => {}
             }
-        }
 
-        let mut c2 = mapping.chars().nth(index).unwrap_or_default();
-        if index > 0 {
-            if c2 == '-' {
-                // Invalid
-                index = 0;
-                c2 = mapping.chars().next().unwrap_or_default();
+            let mut mapped_char = mapping_str.chars().nth(index).unwrap_or('-');
+
+            if index > 0 {
+                if mapped_char == '-' {
+                    mapped_char = mapping_str.chars().next().unwrap_or(c);
+                } else {
+                    chars.next(); // Consume diacritic
+                }
             } else {
-                i += 1;
+                 mapped_char = mapping_str.chars().next().unwrap_or(c);
             }
+            
+            result.push(if mapped_char == '-' { c } else { mapped_char });
+
+        } else {
+            result.push(c);
         }
-
-        result.push(c2);
-        i += 1;
     }
-
     result
 }
 
-pub fn get_kana_diacritic_info<T: AsRef<char>>(character: T) -> Option<DiacriticInfo> {
-    let character = character.as_ref();
-    DIACRITIC_MAPPING.get(character);
-    if let Some(info) = DIACRITIC_MAPPING.get(character) {
-        return Some(DiacriticInfo {
-            character: info.character,
-            diacritic_type: info.diacritic_type.clone(),
-        });
-    }
-    None
+pub fn get_kana_diacritic_info(character: char) -> Option<DiacriticInfo> {
+    DIACRITIC_MAPPING.get(&character).copied()
 }
 
 pub fn dakuten_allowed(code_point: u32) -> bool {
-    // To reduce processing time, some characters which
-    // shouldn't have dakuten but are highly unlikely to have a
-    // combining character attached are included.
-    // かがきぎくぐけげこごさざしじすずせぜそぞただちぢっつづてでとはばぱひびぴふぶぷへべぺほ
-    // カガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトハバパヒビピフブプヘベペホ
-    (0x304B..=0x3068).contains(&code_point)
-        || (0x306F..=0x307B).contains(&code_point)
-        || (0x30AB..=0x30C8).contains(&code_point)
-        || (0x30CF..=0x30DB).contains(&code_point)
+    (0x304B..=0x3068).contains(&code_point) ||
+    (0x306F..=0x307B).contains(&code_point) ||
+    (0x30AB..=0x30C8).contains(&code_point) ||
+    (0x30CF..=0x30DB).contains(&code_point)
 }
 
 pub fn handakuten_allowed(code_point: u32) -> bool {
-    // To reduce processing time, some characters which
-    // shouldn't have handakuten but are highly unlikely to have a
-    // combining character attached are included.
-    // はばぱひびぴふぶぷへべぺほ
-    // ハバパヒビピフブプヘベペホ
     (0x306F..=0x307B).contains(&code_point) || (0x30CF..=0x30DB).contains(&code_point)
 }
 
 pub fn normalize_combining_characters(text: &str) -> String {
-    let mut result = String::new();
-    let mut i = text.len() as isize - 1;
-    // Ignoring the first character is intentional, it cannot combine with anything
-    while i > 0 {
-        if let Some(char) = text.chars().nth(i as usize) {
-            if char == '\u{3099}' {
-                if let Some(dakuten_combinee) = text.chars().nth(i as usize - 1) {
-                    if dakuten_allowed(dakuten_combinee as u32) {
-                        if let Some(combined_char) =
-                            std::char::from_u32(dakuten_combinee as u32 + 1)
-                        {
-                            result.insert(0, combined_char);
-                            i -= 2;
-                            continue;
-                        }
-                    }
+    let mut result = String::with_capacity(text.len());
+    let mut chars = text.chars().peekable();
+
+    while let Some(current_char) = chars.next() {
+        let current_cp = current_char as u32;
+        let mut combined = false;
+
+        if let Some(&next_char) = chars.peek() {
+            if next_char == '\u{3099}' && dakuten_allowed(current_cp) {
+                if let Some(combined_char) = std::char::from_u32(current_cp + 1) {
+                    result.push(combined_char); chars.next(); combined = true;
                 }
-            } else if char == '\u{309A}' {
-                if let Some(handakuten_combinee) = text.chars().nth(i as usize - 1) {
-                    if handakuten_allowed(handakuten_combinee as u32) {
-                        if let Some(combined_char) =
-                            std::char::from_u32(handakuten_combinee as u32 + 2)
-                        {
-                            result.insert(0, combined_char);
-                            i -= 2;
-                            continue;
-                        }
-                    }
+            } else if next_char == '\u{309A}' && handakuten_allowed(current_cp) {
+                if let Some(combined_char) = std::char::from_u32(current_cp + 2) {
+                    result.push(combined_char); chars.next(); combined = true;
                 }
-            } else {
-                result.insert(0, char);
             }
         }
-        i -= 1;
-    }
-    // i === -1 when first two characters are combined
-    if i == 0 {
-        if let Some(char) = text.chars().next() {
-            result.insert(0, char);
-        }
+        if !combined { result.push(current_char); }
     }
     result
 }
 
+// Fixed to use `nfkd()` and correct import
+pub fn normalize_cjk_compatibility_characters(text: &str) -> String {
+    text.chars().map(|c| {
+        let code_point = c as u32;
+        if is_code_point_in_range(code_point, CJK_COMPATIBILITY_IDEOGRAPHS_RANGE) {
+            c.nfkd().collect::<String>()
+        } else {
+            c.to_string()
+        }
+    }).collect()
+}
+
+// Furigana distribution
+
+fn get_furigana_kana_segments(text: &str, reading: &str) -> Vec<FuriganaSegment> {
+    let mut new_segments: Vec<FuriganaSegment> = Vec::new();
+    let mut start_idx = 0;
+    let mut reading_start_idx = 0;
+
+    if text.is_empty() { return new_segments; }
+
+    let mut text_iter = text.char_indices();
+    let mut reading_iter = reading.char_indices();
+
+    let mut state = text.chars().next() == reading.chars().next();
+
+    loop {
+        match (text_iter.next(), reading_iter.next()) {
+            (Some((i_t, tc)), Some((i_r, rc))) => {
+                let new_state = tc == rc;
+                if state != new_state {
+                    new_segments.push(FuriganaSegment::create_furigana_segment(
+                        text[start_idx..i_t].to_string(),
+                        if state { None } else { Some(reading[reading_start_idx..i_r].to_string()) },
+                    ));
+                    state = new_state;
+                    start_idx = i_t;
+                    reading_start_idx = i_r;
+                }
+            }
+            _ => break,
+        }
+    }
+
+    new_segments.push(FuriganaSegment::create_furigana_segment(
+        text[start_idx..].to_string(),
+        if state { None } else { Some(reading[reading_start_idx..].to_string()) },
+    ));
+    new_segments
+}
+
+// Fixed to handle char vs byte indices more carefully
+fn segmentize_furigana(
+    reading: &str,
+    reading_normalized: &str,
+    groups: &[FuriganaGroup],
+    groups_start: usize,
+) -> Option<Vec<FuriganaSegment>> {
+    let group_count = groups.len().saturating_sub(groups_start);
+    if group_count == 0 {
+        return if reading.is_empty() { Some(vec![]) } else { None };
+    }
+
+    let group = &groups[groups_start];
+    let text = &group.text;
+
+    if group.is_kana {
+        if let Some(text_normalized_val) = &group.text_normalized {
+            if reading_normalized.starts_with(text_normalized_val) {
+                let norm_char_count = text_normalized_val.chars().count();
+                let reading_byte_idx = reading.char_indices().nth(norm_char_count).map_or(reading.len(), |(i, _)| i);
+                let norm_byte_idx = reading_normalized.char_indices().nth(norm_char_count).map_or(reading_normalized.len(), |(i, _)| i);
+
+                if let Some(mut segments) = segmentize_furigana(
+                    &reading[reading_byte_idx..],
+                    &reading_normalized[norm_byte_idx..],
+                    groups,
+                    groups_start + 1,
+                ) {
+                    let reading_prefix = &reading[..reading_byte_idx];
+                    if reading_prefix == text {
+                        segments.insert(0, FuriganaSegment::create_furigana_segment(text.clone(), None));
+                    } else {
+                        let mut kana_segments = get_furigana_kana_segments(text, reading_prefix);
+                        kana_segments.extend(segments);
+                        segments = kana_segments;
+                    }
+                    return Some(segments);
+                }
+            }
+        }
+        None
+    } else {
+        let mut result = None;
+        let reading_char_count = reading.chars().count();
+        let text_char_count = text.chars().count();
+
+        for char_len in (text_char_count..=reading_char_count).rev() {
+            let reading_byte_idx = reading.char_indices().nth(char_len).map_or(reading.len(), |(i, _)| i);
+            let norm_byte_idx = reading_normalized.char_indices().nth(char_len).map_or(reading_normalized.len(), |(i, _)| i);
+
+            if let Some(mut segments) = segmentize_furigana(
+                &reading[reading_byte_idx..],
+                &reading_normalized[norm_byte_idx..],
+                groups,
+                groups_start + 1,
+            ) {
+                if result.is_some() { return None; }
+
+                segments.insert(0, FuriganaSegment::create_furigana_segment(text.clone(), Some(reading[..reading_byte_idx].to_string())));
+                result = Some(segments);
+
+                if group_count == 1 { break; }
+            }
+        }
+        result
+    }
+}
+
+
 pub fn distribute_furigana(term: String, reading: String) -> Vec<FuriganaSegment> {
     if reading == term {
-        // Same
         return vec![FuriganaSegment::create_furigana_segment(term, None)];
     }
 
     let mut groups: Vec<FuriganaGroup> = vec![];
-    let mut group_pre: Option<FuriganaGroup> = None;
-    let mut is_kana_pre: Option<bool> = None;
+    if !term.is_empty() {
+        let mut term_chars = term.chars();
+        let first_char = term_chars.next().unwrap();
+        let mut current_is_kana = is_code_point_kana(first_char as u32);
+        let mut current_text = String::from(first_char);
 
-    for c in term.chars() {
-        let code_point = c.code_point_at(0).unwrap_or_default();
-        let is_kana = is_code_point_kana(code_point);
-        if Some(is_kana) == is_kana_pre {
-            if let Some(ref mut group) = group_pre {
-                group.text.push(c);
+        for c in term_chars {
+            let is_kana = is_code_point_kana(c as u32);
+            if is_kana == current_is_kana {
+                current_text.push(c);
+            } else {
+                groups.push(FuriganaGroup { is_kana: current_is_kana, text: current_text, text_normalized: None });
+                current_text = String::from(c);
+                current_is_kana = is_kana;
             }
-        } else {
-            let new_group = FuriganaGroup {
-                is_kana,
-                text: c.to_string(),
-                text_normalized: None,
-            };
-            groups.push(new_group.clone());
-            group_pre = Some(new_group);
-            is_kana_pre = Some(is_kana);
         }
+        groups.push(FuriganaGroup { is_kana: current_is_kana, text: current_text, text_normalized: None });
     }
 
     for group in &mut groups {
@@ -803,17 +575,14 @@ pub fn distribute_furigana(term: String, reading: String) -> Vec<FuriganaSegment
     }
 
     let reading_normalized = convert_katakana_to_hiragana(&reading, false);
-    if let Some(segments) = segmentize_furigana(reading.clone(), reading_normalized, &groups, 0) {
+    if let Some(segments) = segmentize_furigana(&reading, &reading_normalized, &groups, 0) {
         return segments;
     }
 
-    // Fallback
-    vec![FuriganaSegment::create_furigana_segment(
-        term,
-        Some(reading),
-    )]
+    vec![FuriganaSegment::create_furigana_segment(term, Some(reading))]
 }
 
+// Fixed to use byte length stem
 pub fn distribute_furigana_inflected(
     term: String,
     mut reading: String,
@@ -824,118 +593,119 @@ pub fn distribute_furigana_inflected(
     let source_normalized = convert_katakana_to_hiragana(&source, false);
 
     let mut main_text = term.clone();
-    let mut stem_length = get_stem_length(&term_normalized, &source_normalized);
+    let mut stem_byte_length = get_stem_length(&term_normalized, &source_normalized);
 
-    // Check if source is derived from the reading instead of the term
-    let reading_stem_length = get_stem_length(&reading_normalized, &source_normalized);
-    if reading_stem_length > 0 && reading_stem_length >= stem_length {
+    let reading_stem_byte_length = get_stem_length(&reading_normalized, &source_normalized);
+    if reading_stem_byte_length > 0 && reading_stem_byte_length >= stem_byte_length {
         main_text = reading.clone();
-        stem_length = reading_stem_length;
-        let new_reading = format!(
-            "{}{}",
-            &source[..stem_length as usize],
-            &reading[stem_length as usize..]
-        );
-        reading = new_reading;
+        stem_byte_length = reading_stem_byte_length;
+        reading = format!("{}{}", &source[..stem_byte_length], &reading[stem_byte_length..]);
     }
+
+    let source_byte_len = source.len();
+
     let mut segments: Vec<FuriganaSegment> = vec![];
-    if stem_length > 0 {
-        main_text = format!(
-            "{}{}",
-            &source[..stem_length as usize],
-            &main_text[stem_length as usize..]
-        );
+    if stem_byte_length > 0 {
+        main_text = format!("{}{}", &source[..stem_byte_length], &main_text[stem_byte_length..]);
+
         let segments2 = distribute_furigana(main_text.clone(), reading);
-        let mut consumed = 0;
+        let mut consumed_bytes = 0;
         for segment in segments2 {
-            let text = &segment.text;
-            let start = consumed;
-            consumed += text.len();
-            match consumed.cmp(&(stem_length as usize)) {
-                std::cmp::Ordering::Less => {
-                    segments.push(segment);
+            let text_len = segment.text.len();
+            let start = consumed_bytes;
+            consumed_bytes += text_len;
+            if consumed_bytes < stem_byte_length {
+                segments.push(segment);
+            } else if consumed_bytes == stem_byte_length {
+                segments.push(segment);
+                break;
+            } else {
+                if start < stem_byte_length {
+                    segments.push(FuriganaSegment::create_furigana_segment(
+                        main_text[start..stem_byte_length].to_string(),
+                        None,
+                    ));
                 }
-                std::cmp::Ordering::Equal => {
-                    segments.push(segment);
-                    break;
-                }
-                std::cmp::Ordering::Greater => {
-                    if start < stem_length as usize {
-                        segments.push(FuriganaSegment::create_furigana_segment(
-                            main_text[start..stem_length as usize].to_string(),
-                            None,
-                        ));
-                    }
-                    break;
-                }
+                break;
             }
         }
     }
 
-    if stem_length < source.len() as u32 {
-        let remainder = &source[stem_length as usize..];
-        let segment_count = segments.len();
-        if segment_count > 0 && segments[segment_count - 1].reading.is_some() {
-            // Append to the last segment if it has an empty reading
-            segments[segment_count - 1].text.push_str(remainder);
-        } else {
-            // Otherwise, create a new segment
-            segments.push(FuriganaSegment::create_furigana_segment(
-                remainder.to_string(),
-                None,
-            ));
+    if stem_byte_length < source_byte_len {
+        let remainder = &source[stem_byte_length..];
+        if let Some(last_segment) = segments.last_mut() {
+             if last_segment.reading.is_none() {
+                 last_segment.text.push_str(remainder);
+                 return segments;
+             }
         }
+        segments.push(FuriganaSegment::create_furigana_segment(remainder.to_string(), None));
     }
-
     segments
 }
 
+// Miscellaneous
+
 pub fn is_emphatic_code_point(code_point: u32) -> bool {
-    code_point == HIRAGANA_SMALL_TSU_CODE_POINT
-        || code_point == KATAKANA_SMALL_TSU_CODE_POINT
-        || code_point == KANA_PROLONGED_SOUND_MARK_CODE_POINT
+    matches!(code_point, HIRAGANA_SMALL_TSU_CODE_POINT | KATAKANA_SMALL_TSU_CODE_POINT | KANA_PROLONGED_SOUND_MARK_CODE_POINT)
 }
 
-pub fn collapse_emphatic_sequences(text: String, full_collapse: bool) -> String {
+pub fn collapse_emphatic_sequences(text: &str, full_collapse: bool) -> String {
+    let chars: Vec<char> = text.chars().collect();
+    let len = chars.len();
+    if len == 0 { return String::new(); }
+
     let mut left = 0;
-    while left < text.len() && is_emphatic_code_point(text.code_point_at(left).unwrap_or_default())
-    {
+    while left < len && is_emphatic_code_point(chars[left] as u32) {
         left += 1;
     }
 
-    let mut right = text.len() as isize - 1;
-    while right >= 0
-        && is_emphatic_code_point(text.code_point_at(right as usize).unwrap_or_default())
-    {
+    let mut right = len;
+    while right > left && is_emphatic_code_point(chars[right - 1] as u32) {
         right -= 1;
     }
 
-    // Whole string is emphatic
-    if left > right as usize {
-        return text;
-    }
+    if left >= right { return text.to_string(); }
 
-    let leading_emphatics = text[..left].to_string();
-    let trailing_emphatics = text[(right as usize + 1)..].to_string();
+    let leading_emphatics: String = chars[0..left].iter().collect();
+    let trailing_emphatics: String = chars[right..len].iter().collect();
     let mut middle = String::new();
-    let mut current_collapsed_code_point = -1i32;
+    let mut current_collapsed_code_point: Option<u32> = None;
 
-    for i in left..=right as usize {
-        let char = &text[i..i + 1];
-        let code_point = char.code_point_at(0).unwrap_or_default() as i32;
-        if is_emphatic_code_point(code_point as u32) {
-            if current_collapsed_code_point != code_point {
-                current_collapsed_code_point = code_point;
-                if !full_collapse {
-                    middle.push_str(char);
-                    continue;
-                }
+    for &char in &chars[left..right] {
+        let code_point = char as u32;
+        if is_emphatic_code_point(code_point) {
+            if current_collapsed_code_point != Some(code_point) {
+                current_collapsed_code_point = Some(code_point);
+                middle.push(char);
+            } else if !full_collapse {
+                 middle.push(char);
             }
         } else {
-            current_collapsed_code_point = -1;
-            middle.push_str(char);
+            current_collapsed_code_point = None;
+            middle.push(char);
         }
     }
+
+    // Second pass for full collapse
+    if full_collapse {
+        let original_middle = middle;
+        middle = String::new();
+        current_collapsed_code_point = None;
+         for char in original_middle.chars() {
+             let code_point = char as u32;
+             if is_emphatic_code_point(code_point) {
+                 if current_collapsed_code_point != Some(code_point) {
+                    current_collapsed_code_point = Some(code_point);
+                    middle.push(char);
+                 }
+             } else {
+                 current_collapsed_code_point = None;
+                 middle.push(char);
+             }
+         }
+    }
+
 
     format!("{leading_emphatics}{middle}{trailing_emphatics}")
 }
