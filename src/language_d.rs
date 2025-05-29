@@ -58,7 +58,7 @@ pub type BidirectionalConversionPreProcessor =
 pub enum AllTextProcessorsEnum {}
 
 pub struct LanguageAndProcessors {
-    pub iso: String,
+    pub iso: &'static str,
     pub preprocessors: Vec<TextProcessorWithId>,
     pub postprocessors: Vec<TextProcessorWithId>,
 }
