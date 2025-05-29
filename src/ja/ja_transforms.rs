@@ -61,7 +61,7 @@ pub(crate) enum HasTermReasonsError {
 }
 
 #[derive(Debug)]
-pub(crate) enum IrregularVerbSuffix {
+pub enum IrregularVerbSuffix {
     て,
     た,
     たら,

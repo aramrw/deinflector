@@ -59,8 +59,8 @@ pub enum AllTextProcessorsEnum {}
 
 pub struct LanguageAndProcessors {
     pub iso: &'static str,
-    pub preprocessors: Vec<TextProcessorWithId>,
-    pub postprocessors: Vec<TextProcessorWithId>,
+    pub pre: Vec<TextProcessorWithId>,
+    pub post: Vec<TextProcessorWithId>,
 }
 
 pub struct LanguageAndReadingNormalizer {

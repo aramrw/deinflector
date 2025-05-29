@@ -17,7 +17,7 @@ use crate::{
     descriptors::{JapanesePreProcessors, LanguageDescriptor, PreAndPostProcessors},
     en::en_transforms::{PARTICLES_DISJUNCTION, PHRASAL_VERB_WORD_DISJUNCTION},
     ja::ja_transforms::JAPANESE_TRANSFORMS_DESCRIPTOR,
-    japanese::is_string_partially_japanese,
+    ja::japanese::is_string_partially_japanese,
     text_preprocessors::{
         ALPHABETIC_TO_HIRAGANA, ALPHANUMERIC_WIDTH_VARIANTS, COLLAPSE_EMPHATIC_SEQUENCES,
         CONVERT_HALF_WIDTH_CHARACTERS, CONVERT_HIRAGANA_TO_KATAKANA,
@@ -984,5 +984,3 @@ mod language_transformer_tests {
         assert_eq!(condition_flags_map, assert_map);
     }
 }
-
-

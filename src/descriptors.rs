@@ -4,8 +4,9 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     en::en_transforms::ENGLISH_TRANSFORMS_DESCRIPTOR,
-    ja::{self, ja_transforms::JAPANESE_TRANSFORMS_DESCRIPTOR},
-    japanese::is_string_partially_japanese,
+    ja::{
+        self, ja_transforms::JAPANESE_TRANSFORMS_DESCRIPTOR, japanese::is_string_partially_japanese,
+    },
     language_d::{
         AnyTextProcessor, BidirectionalConversionPreProcessor, ReadingNormalizer, TextProcessor,
         TextProcessorWithId,

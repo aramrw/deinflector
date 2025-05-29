@@ -7,6 +7,7 @@ use crate::{
 
 // key: language (ie: "en", "ja")
 // valueL LanguageTransformer
+#[derive(Clone, Debug)]
 pub struct MultiLanguageTransformer {
     inner: HashMap<&'static str, LanguageTransformer>,
 }

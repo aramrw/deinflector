@@ -1,5 +1,5 @@
 use crate::{
-    japanese::{
+    ja::japanese::{
         collapse_emphatic_sequences, convert_alphanumeric_to_fullwidth,
         convert_fullwidth_alphanumeric_to_normal, convert_halfwidth_kana_to_fullwidth,
         convert_hiragana_to_katakana, convert_katakana_to_hiragana,
