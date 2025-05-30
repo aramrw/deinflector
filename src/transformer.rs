@@ -161,7 +161,7 @@ impl std::fmt::Debug for ConditionError {
 }
 
 /// [`MultiLanguageTransformer`]'s inner language specific deconjugator.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct LanguageTransformer {
     next_flag_index: usize,
     transforms: Vec<InternalTransform>,
@@ -171,12 +171,7 @@ pub struct LanguageTransformer {
 
 impl LanguageTransformer {
     pub fn new() -> Self {
-        Self {
-            next_flag_index: 0,
-            transforms: Vec::new(),
-            condition_type_to_condition_flags_map: IndexMap::new(),
-            part_of_speech_to_condition_flags_map: IndexMap::new(),
-        }
+        Self::default()
     }
 
     fn clear(&mut self) {
@@ -641,6 +636,28 @@ pub trait RuleDeinflectFnTrait: 'static {
         }
     }
 
+    // fn deinflect_generic_suffix(&self, text: &str) -> String {
+    //     let deinflected_suffix = self.deinflected(); // The string to add after stripping
+    //
+    //     // Get the LITERAL suffix string (e.g., "ing", not "ing$")
+    //     // Assumes you've added inflected_str() or a similar method/field for suffixes too
+    //     let inflected_literal_suffix = self
+    //         .inflected_str() // Or however you store/access the simple suffix string
+    //         .expect("Suffix rule missing literal suffix");
+    //
+    //     // Use strip_suffix - it's safer as it CHECKS if the text ends with the suffix
+    //     if let Some(base) = text.strip_suffix(inflected_literal_suffix) {
+    //         format!("{base}{deinflected_suffix}")
+    //     } else {
+    //         // This ideally shouldn't happen if is_inflected (the regex) matched correctly
+    //         // and inflected_literal_suffix is the correct corresponding literal part.
+    //         // However, it's a safe fallback.
+    //         // You might want to log a warning here if it occurs, as it could indicate
+    //         // a mismatch between your regex and your literal suffix string.
+    //         text.to_string()
+    //     }
+    // }
+
     fn deinflect_generic_suffix(&self, text: &str) -> String {
         let inflected_pattern = self.inflected();
         // Remove the trailing '$' if it exists.
@@ -802,17 +819,6 @@ pub struct Rule {
     pub conditions_out: &'static [&'static str],
 }
 
-/// Compares the original &str of two regexp then cmp
-/// Used with [`Derivative`]
-///
-/// # Example
-///
-/// ```
-/// struct Foo {
-///     #[derivative(PartialEq(compare_with = "partialeq_regex"))]
-///     regexp: Regex,
-/// }
-/// ```
 pub fn partialeq_regex(x: &Regex, y: &Regex) -> bool {
     let xstr = x.as_str();
     let ystr = y.as_str();

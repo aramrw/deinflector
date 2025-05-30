@@ -18,16 +18,6 @@ use crate::{
     transforms::inflection,
 };
 
-/// Produces an iterator of [`SuffixRule`] from the `suffix` parameter
-/// #\[test\]: double_consonant_inflection()
-///
-/// # Example
-/// ```
-/// use super::*;
-/// // output shortened for brevity:
-/// // [("bbing$", "b"), ("dding$", "b"), ("gging$", "g"), ("kking$", "k")]
-/// doubled_consonant_inflection("bdgk", "ing", &["v"], &["v"])
-/// ```
 fn doubled_consonant_inflection<'a: 'static>(
     consonants: &'a str,
     suffix: &'a str,

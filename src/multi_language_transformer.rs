@@ -34,7 +34,7 @@ impl MultiLanguageTransformer {
         }
     }
 
-    pub(crate) fn get_condition_flags_from_parts_of_speech(
+    pub fn get_condition_flags_from_parts_of_speech(
         &self,
         language: &str,
         parts_of_speech: &[String],
@@ -45,7 +45,7 @@ impl MultiLanguageTransformer {
             .unwrap_or(0)
     }
 
-    pub(crate) fn get_condition_flags_from_condition_types(
+    pub fn get_condition_flags_from_condition_types(
         &self,
         language: &str,
         condition_types: &[String],
@@ -56,7 +56,7 @@ impl MultiLanguageTransformer {
             .unwrap_or(0)
     }
 
-    pub(crate) fn get_condition_flags_from_condition_type(
+    pub fn get_condition_flags_from_condition_type(
         &self,
         language: &str,
         condition_type: &str,
@@ -67,7 +67,7 @@ impl MultiLanguageTransformer {
             .unwrap_or(0)
     }
 
-    pub(crate) fn transform(&self, language: &str, source_text: &str) -> Vec<TransformedText> {
+    pub fn transform(&self, language: &str, source_text: &str) -> Vec<TransformedText> {
         match self.inner.get(language) {
             Some(lt) => lt.transform(source_text),
             None => vec![TransformedText::create_transformed_text(
@@ -78,7 +78,7 @@ impl MultiLanguageTransformer {
         }
     }
 
-    pub(crate) fn get_user_facing_inflection_rules(
+    pub fn get_user_facing_inflection_rules(
         &self,
         language: &str,
         inflection_rules: &[&'static str],
