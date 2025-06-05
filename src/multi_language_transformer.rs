@@ -81,14 +81,14 @@ impl MultiLanguageTransformer {
     pub fn get_user_facing_inflection_rules(
         &self,
         language: &str,
-        inflection_rules: &[&'static str],
+        inflection_rules: &[String],
     ) -> InflectionRuleChain {
         match self.inner.get(language) {
             Some(lt) => lt.get_user_facing_inflection_rules(inflection_rules),
             None => inflection_rules
                 .iter()
                 .map(|rule| InflectionRule {
-                    name: rule,
+                    name: rule.clone(),
                     description: None,
                 })
                 .collect(),

@@ -33,6 +33,12 @@ pub struct InternalTransform {
     pub description: Option<&'static str>,
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct InternalInflectionRuleChainCandidate {
+    pub source: InflectionSource,
+    pub inflection_rules: Vec<String>,
+}
+
 #[derive(Debug, Clone)]
 pub struct InternalRule {
     pub rule_type: RuleType,
@@ -101,7 +107,7 @@ pub struct LanguageTransformDescriptorInternal {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct InflectionRuleChainCandidate {
     pub source: InflectionSource,
-    pub inflection_rules: Vec<String>,
+    pub inflection_rules: InflectionRuleChain,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -116,8 +122,8 @@ pub type InflectionRuleChain = Vec<InflectionRule>;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct InflectionRule {
-    pub name: &'static str,
-    pub description: Option<&'static str>,
+    pub name: String,
+    pub description: Option<String>,
 }
 
 /// Errors for [`LanguageTransformer`].
@@ -383,7 +389,7 @@ impl LanguageTransformer {
 
     pub fn get_user_facing_inflection_rules(
         &self,
-        inflection_rules: &[&'static str],
+        inflection_rules: &[String],
     ) -> InflectionRuleChain {
         inflection_rules
             .iter()
@@ -394,12 +400,16 @@ impl LanguageTransformer {
                     .find(|transform| transform.id == *rule);
                 if let Some(full_rule) = full_rule {
                     return InflectionRule {
-                        name: full_rule.name,
-                        description: full_rule.description,
+                        name: full_rule.name.to_string(),
+                        description: full_rule
+                            .description
+                            .into_iter()
+                            .map(|str| Some(str.to_string()))
+                            .collect(),
                     };
                 }
                 InflectionRule {
-                    name: rule,
+                    name: rule.to_string(),
                     description: None,
                 }
             })
