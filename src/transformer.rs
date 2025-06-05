@@ -110,7 +110,7 @@ pub struct InflectionRuleChainCandidate {
     pub inflection_rules: InflectionRuleChain,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum InflectionSource {
     Algorithm,
