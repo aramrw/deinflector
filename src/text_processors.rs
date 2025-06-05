@@ -36,7 +36,7 @@ pub fn decapitalize_helper(text: &str, setting: TextProcessorSetting) -> String 
 pub const DECAPITALIZE: TextProcessor = TextProcessor {
     name: "Decapitalize Text",
     description: "CAPITALIZED TEXT → capitalized text",
-    options: &BASIC_TEXT_PROCESSOR_OPTIONS,
+    options: BASIC_TEXT_PROCESSOR_OPTIONS,
     process: decapitalize_helper,
 };
 
@@ -54,14 +54,14 @@ pub fn capitalize_first_letter_helper(text: &str, setting: TextProcessorSetting)
 pub const CAPITALIZE_FIRST_LETTER: TextProcessor = TextProcessor {
     name: "Capitalize First Letter",
     description: "lowercase text → Lowercase text",
-    options: &BASIC_TEXT_PROCESSOR_OPTIONS,
+    options: BASIC_TEXT_PROCESSOR_OPTIONS,
     process: capitalize_first_letter_helper,
 };
 
 pub const REMOVE_ALPHABETIC_DIACRITICS: TextProcessor = TextProcessor {
     name: "Remove Alphabetic Diacritics",
     description: "ἄήé → αηe",
-    options: &BASIC_TEXT_PROCESSOR_OPTIONS,
+    options: BASIC_TEXT_PROCESSOR_OPTIONS,
     process: remove_alphabetic_diacritics,
 };
 
@@ -89,6 +89,6 @@ fn normalize_radical_characters_helper(text: &str, setting: TextProcessorSetting
 pub const NORMALIZE_RADICAL_CHARACTERS: TextProcessor = TextProcessor {
     name: "Normalize radical characters",
     description: "⼀ → 一 (U+2F00 → U+4E00)",
-    options: &BASIC_TEXT_PROCESSOR_OPTIONS,
+    options: BASIC_TEXT_PROCESSOR_OPTIONS,
     process: normalize_radical_characters_helper,
 };

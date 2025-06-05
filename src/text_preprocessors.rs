@@ -27,7 +27,7 @@ fn convert_half_width_characters_helper(text: &str, setting: TextProcessorSettin
 pub const CONVERT_HALF_WIDTH_CHARACTERS: TextProcessor = TextProcessor {
     name: "Convert Half Width Characters to Full Width",
     description: "ﾖﾐﾁｬﾝ → ヨミチャン",
-    options: &BASIC_TEXT_PROCESSOR_OPTIONS,
+    options: BASIC_TEXT_PROCESSOR_OPTIONS,
     process: convert_half_width_characters_helper,
 };
 
@@ -41,7 +41,7 @@ pub fn alphabetic_to_hiragana_helper(text: &str, setting: TextProcessorSetting) 
 pub const ALPHABETIC_TO_HIRAGANA: TextProcessor = TextProcessor {
     name: "Convert Alphabetic Characters to Hiragana",
     description: "yomichan → よみちゃん",
-    options: &BASIC_TEXT_PROCESSOR_OPTIONS,
+    options: BASIC_TEXT_PROCESSOR_OPTIONS,
     process: alphabetic_to_hiragana_helper,
 };
 
@@ -126,7 +126,7 @@ fn normalize_combining_characters_helper(text: &str, setting: TextProcessorSetti
 pub const NORMALIZE_COMBINING_CHARACTERS: TextProcessor = TextProcessor {
     name: "Normalize Combining Characters",
     description: "ド → ド (U+30C8 U+3099 → U+30C9)",
-    options: &BASIC_TEXT_PROCESSOR_OPTIONS,
+    options: BASIC_TEXT_PROCESSOR_OPTIONS,
     process: normalize_combining_characters_helper,
 };
 
@@ -143,7 +143,7 @@ fn normalize_cjk_compatibility_characters_helper(
 pub const NORMALIZE_CJK_COMPATIBILITY_CHARACTERS: TextProcessor = TextProcessor {
     name: "Normalize CJK Compatibility Characters",
     description: "㌀ → アパート",
-    options: &BASIC_TEXT_PROCESSOR_OPTIONS,
+    options: BASIC_TEXT_PROCESSOR_OPTIONS,
     process: normalize_cjk_compatibility_characters_helper,
 };
 
@@ -157,10 +157,6 @@ fn standardize_kanji_helper(text: &str, setting: TextProcessorSetting) -> String
 pub const STANDARDIZE_KANJI: TextProcessor = TextProcessor {
     name: "Convert kanji variants to their modern standard form",
     description: "萬 → 万",
-    options: &BASIC_TEXT_PROCESSOR_OPTIONS,
+    options: BASIC_TEXT_PROCESSOR_OPTIONS,
     process: standardize_kanji_helper,
 };
-
-// You might also need NORMALIZE_RADICAL_CHARACTERS if you intend to keep it,
-// but it's not in the JS provided. If you want strict JS parity, remove it
-// from descriptors.rs. If you need it, you'll have to define it here.
