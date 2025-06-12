@@ -11,7 +11,6 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer, Serialize};
 use snafu::ResultExt;
 use std::collections::HashMap;
-use strace::{dbug, pt};
 
 use crate::{
     descriptors::{JapanesePreProcessors, LanguageDescriptor, PreAndPostProcessors},
@@ -354,7 +353,7 @@ impl LanguageTransformer {
                             text: text.clone(),
                             trace: trace.clone(),
                         };
-                        pt!("error", "{}", e);
+                        println!("[error]: {e}");
                         continue;
                     }
 
@@ -705,7 +704,7 @@ pub trait RuleDeinflectFnTrait: 'static {
     fn english_create_phrasal_verb_inflection_deinflect(&self, text: &str) -> String {
         let inflected = self.inflected_str().unwrap();
         let deinflected = self.deinflected();
-        dbug!(deinflected);
+        //dbg!(deinflected);
         let pattern = format!(
             r"(?<=){}(?= (?:{}))",
             fancy_regex::escape(inflected),
@@ -757,7 +756,7 @@ impl RuleDeinflectFnTrait for SuffixRule {
             true => &str[..str.len() - 1],
             false => str,
         }) as _;
-        dbug!(("getting inflected() from trait: {res}"));
+        //dbug!(("getting inflected() from trait: {res}"));
         res
     }
     fn inflected_str(&self) -> Option<&str> {
