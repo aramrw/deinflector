@@ -4,6 +4,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     en::en_transforms::ENGLISH_TRANSFORMS_DESCRIPTOR,
+    es::es_transforms::SPANISH_TRANSFORMS_DESCRIPTOR,
     ja::{
         self, ja_transforms::JAPANESE_TRANSFORMS_DESCRIPTOR, japanese::is_string_partially_japanese,
     },
@@ -189,6 +190,31 @@ pub static LANGUAGE_DESCRIPTOR_MAP: LazyLock<IndexMap<&str, LanguageDescriptor>>
                         post: vec![],
                     },
                     language_transforms: Some(&*ENGLISH_TRANSFORMS_DESCRIPTOR),
+                },
+            ),
+            (
+                "es",
+                LanguageDescriptor {
+                    iso: "es",
+                    iso639_3: "spa",
+                    name: "Spanish",
+                    example_text: "leer",
+                    is_text_lookup_worthy: None,
+                    reading_normalizer: None,
+                    text_processors: PreAndPostProcessors {
+                        pre: vec![
+                            TextProcessorWithId {
+                                id: "decapitalize",
+                                processor: DECAPITALIZE,
+                            },
+                            TextProcessorWithId {
+                                id: "capitalize_first_letter",
+                                processor: CAPITALIZE_FIRST_LETTER,
+                            },
+                        ],
+                        post: vec![],
+                    },
+                    language_transforms: Some(&*SPANISH_TRANSFORMS_DESCRIPTOR),
                 },
             ),
         ])
