@@ -63,6 +63,9 @@ impl RuleDeinflectFnTrait for InternalRule {
     fn inflected_str(&self) -> Option<&str> {
         self.inflected_str.as_deref()
     }
+    fn is_inflected_regex(&self) -> &Regex {
+        &self.is_inflected
+    }
     fn deinflected(&self) -> &str {
         self.deinflected
         //.expect("got no deinflected str when expected")
@@ -358,6 +361,15 @@ impl LanguageTransformer {
                     }
 
                     let new_text = rule.deinflect(&text);
+                    // --- TEMPORARY DEBUGGING ---
+                    if text == "me despertar" {
+                        println!("Rule matched for 'me despertar'!");
+                        println!("  - Transform: {}", transform.name);
+                        println!("  - Rule regex: {}", rule.is_inflected.as_str());
+                        println!("  - Produced new_text: '{}'", new_text);
+                        println!("  - Conditions Out: {:?}", rule.conditions_out);
+                    }
+                    // --- END DEBUGGING ---
                     let new_frame = TraceFrame {
                         transform: transform_id.into(),
                         rule_index: j,
@@ -604,6 +616,11 @@ pub struct TransformI18n {
     pub description: Option<&'static str>,
 }
 
+impl Display for DeinflectFnType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
 /// Holds every deinflect variant
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum DeinflectFnType {
@@ -612,11 +629,23 @@ pub enum DeinflectFnType {
     GenericWholeWord,
     EnCreatePhrasalVerbInflection,
     EnPhrasalVerbInterposedObjectRule,
-}
-impl Display for DeinflectFnType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
-    }
+    GenericStemChange {
+        stem_from: &'static str,
+        stem_to: &'static str,
+        // The regex pattern for the endings
+        ending_re: &'static str,
+        ending_to: &'static str,
+    },
+    SpecialCasedStemChange {
+        prefix: &'static str,
+        special_stem_from: &'static str,
+        special_stem_to: &'static str,
+        default_stem_from: &'static str,
+        default_stem_to: &'static str,
+        ending_re: &'static str,
+        ending_to: &'static str,
+    },
+    Pronominal,
 }
 
 /// Trait for Rule's to deinflect text
@@ -626,46 +655,130 @@ pub trait RuleDeinflectFnTrait: 'static {
     fn deinflect_fn_type(&self) -> DeinflectFnType;
     fn inflected(&self) -> &str;
     fn inflected_str(&self) -> Option<&str>;
+    fn is_inflected_regex(&self) -> &Regex;
     fn deinflected(&self) -> &str;
     /// Matches on [`DeinflectFnType`]
     fn deinflect(&self, text: &str) -> String {
         match self.deinflect_fn_type() {
             DeinflectFnType::GenericSuffix => self.deinflect_generic_suffix(text),
             DeinflectFnType::GenericPrefix => self.deinflect_generic_prefix(text),
+            DeinflectFnType::GenericWholeWord => self.deinflected().to_string(),
             DeinflectFnType::EnCreatePhrasalVerbInflection => {
                 self.english_create_phrasal_verb_inflection_deinflect(text)
             }
             DeinflectFnType::EnPhrasalVerbInterposedObjectRule => {
                 Self::english_create_phrasal_verb_interposed_object_rule(text)
             }
-            _ => panic!(
-                "failed to call `.deinflect(${text})` because deinflect function has not been implemented yet for: {}",
-                self.deinflect_fn_type()
-            ),
-        }
+                // Destructure the enum to get the 'replacement' value
+            DeinflectFnType::Pronominal => {
+                let regex_to_use = self.is_inflected_regex();
+
+                // .captures() to get the groups explicitly.
+                // unwrap because this function is only called
+                // after a successful `is_match` check (in transform())
+                let captures = regex_to_use.captures(text).unwrap().unwrap();
+
+                // group 0 is the full match, 
+                // 1 is the pronoun, 2 is the stem, 3 is the ending.
+                let verb_stem = captures.get(2).unwrap().as_str();
+                let verb_ending = captures.get(3).unwrap().as_str();
+                format!("{}{}{}", verb_stem, verb_ending, "se")
+            }
+
+            // Destructure to get all the stem-change parameters
+            DeinflectFnType::GenericStemChange { stem_from, stem_to, ending_re, ending_to } => {
+                self.deinflect_generic_stem_change(text, stem_from, stem_to, ending_re, ending_to)
+            }
+
+            // Destructure to get all the special-cased stem-change parameters
+            DeinflectFnType::SpecialCasedStemChange {
+                prefix,
+                special_stem_from,
+                special_stem_to,
+                default_stem_from,
+                default_stem_to,
+                ending_re,
+                ending_to
+            } => {
+                self.deinflect_special_cased_stem_change(
+                    text,
+                    prefix,
+                    special_stem_from,
+                    special_stem_to,
+                    default_stem_from,
+                    default_stem_to,
+                    ending_re,
+                    ending_to
+                )
+            }
+                _ => panic!(
+                    "failed to call `.deinflect(${text})` because deinflect function has not been implemented yet for: {}",
+                    self.deinflect_fn_type()
+                ),
+            }
     }
 
-    // fn deinflect_generic_suffix(&self, text: &str) -> String {
-    //     let deinflected_suffix = self.deinflected(); // The string to add after stripping
-    //
-    //     // Get the LITERAL suffix string (e.g., "ing", not "ing$")
-    //     // Assumes you've added inflected_str() or a similar method/field for suffixes too
-    //     let inflected_literal_suffix = self
-    //         .inflected_str() // Or however you store/access the simple suffix string
-    //         .expect("Suffix rule missing literal suffix");
-    //
-    //     // Use strip_suffix - it's safer as it CHECKS if the text ends with the suffix
-    //     if let Some(base) = text.strip_suffix(inflected_literal_suffix) {
-    //         format!("{base}{deinflected_suffix}")
-    //     } else {
-    //         // This ideally shouldn't happen if is_inflected (the regex) matched correctly
-    //         // and inflected_literal_suffix is the correct corresponding literal part.
-    //         // However, it's a safe fallback.
-    //         // You might want to log a warning here if it occurs, as it could indicate
-    //         // a mismatch between your regex and your literal suffix string.
-    //         text.to_string()
-    //     }
-    // }
+    /// Deinflects a verb with a standard stem change (e.g., e->ie, o->ue).
+    /// This is a direct translation of the JS logic: term.replace(stem, ...).replace(ending, ...)
+    fn deinflect_generic_stem_change(
+        &self,
+        text: &str,
+        stem_from: &'static str,
+        stem_to: &'static str,
+        ending_re: &'static str,
+        ending_to: &'static str,
+    ) -> String {
+        // Step 1: Replicate `term.replace(/ie/, 'e')`
+        // This replaces the *first* occurrence of the stem, exactly like the JS.
+        let after_stem_replace = text.replacen(stem_from, stem_to, 1);
+
+        // Step 2: Replicate `.replace(/(e|es|e|en)$/, 'ar')`
+        // Create a regex for the ending and replace it.
+        let ending_regex = Regex::new(ending_re).expect("Invalid ending regex in rule");
+        let final_text = ending_regex.replace(&after_stem_replace, ending_to);
+
+        final_text.to_string()
+    }
+
+    /// Deinflects a stem-changing verb that has a special case,
+    /// like "jugar" (u->ue) or "oler" (o->hue).
+    fn deinflect_special_cased_stem_change(
+        &self,
+        text: &str,
+        special_case_prefix: &'static str,
+        special_stem_from: &'static str,
+        special_stem_to: &'static str,
+        default_stem_from: &'static str,
+        default_stem_to: &'static str,
+        ending_re: &'static str,
+        ending_to: &'static str,
+    ) -> String {
+        let (stem_from, stem_to) = if text.starts_with(special_case_prefix) {
+            // --- SPECIAL CASE --- (e.g., term is "jueguen")
+            (special_stem_from, special_stem_to)
+        } else {
+            // --- DEFAULT CASE --- (e.g., term is "cuenten")
+            (default_stem_from, default_stem_to)
+        };
+
+        // The logic is now identical to the generic function, just with the chosen parameters.
+
+        // Step 1: Replace the stem (e.g., "ue" with "u" for jugar, or "ue" with "o" for contar)
+        let after_stem_replace = text.replacen(stem_from, stem_to, 1);
+
+        // Step 2: Replace the ending
+        let ending_regex = Regex::new(ending_re).expect("Invalid ending regex in rule");
+        let final_text = ending_regex.replace(&after_stem_replace, ending_to);
+
+        final_text.to_string()
+    }
+
+    /// Deinflects a reflexive verb by replacing the pronoun with "se".
+    /// This translates the JS: term.replace(REFLEXIVE_PATTERN, '$1se')
+    fn deinflect_pronominal(&self, text: &str, replacement: &'static str) -> String {
+        let regex_to_use = &self.is_inflected_regex();
+        regex_to_use.replace(text, replacement).to_string()
+    }
 
     fn deinflect_generic_suffix(&self, text: &str) -> String {
         let inflected_pattern = self.inflected();
@@ -749,6 +862,9 @@ pub struct SuffixRule {
 impl RuleDeinflectFnTrait for SuffixRule {
     fn deinflect_fn_type(&self) -> DeinflectFnType {
         self.deinflect_fn
+    }
+    fn is_inflected_regex(&self) -> &Regex {
+        &self.is_inflected
     }
     fn inflected(&self) -> &str {
         let str = self.is_inflected.as_str();
@@ -837,6 +953,9 @@ pub fn partialeq_regex(x: &Regex, y: &Regex) -> bool {
 impl RuleDeinflectFnTrait for Rule {
     fn deinflect_fn_type(&self) -> DeinflectFnType {
         self.deinflect_fn
+    }
+    fn is_inflected_regex(&self) -> &Regex {
+        &self.is_inflected
     }
     fn inflected(&self) -> &str {
         let str = self.is_inflected.as_str();
