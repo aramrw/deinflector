@@ -362,13 +362,6 @@ impl LanguageTransformer {
 
                     let new_text = rule.deinflect(&text);
                     // --- TEMPORARY DEBUGGING ---
-                    if text == "me despertar" {
-                        println!("Rule matched for 'me despertar'!");
-                        println!("  - Transform: {}", transform.name);
-                        println!("  - Rule regex: {}", rule.is_inflected.as_str());
-                        println!("  - Produced new_text: '{}'", new_text);
-                        println!("  - Conditions Out: {:?}", rule.conditions_out);
-                    }
                     // --- END DEBUGGING ---
                     let new_frame = TraceFrame {
                         transform: transform_id.into(),
@@ -780,21 +773,29 @@ pub trait RuleDeinflectFnTrait: 'static {
         regex_to_use.replace(text, replacement).to_string()
     }
 
+    // either one of these might be correct, needs more testing
+    // fn deinflect_generic_suffix(&self, text: &str) -> String {
+    //     let inflected_pattern = self.inflected();
+    //     // Remove the trailing '$' if it exists.
+    //     let inflected_literal = if inflected_pattern.ends_with('$') {
+    //         &inflected_pattern[..inflected_pattern.len() - 1]
+    //     } else {
+    //         inflected_pattern
+    //     };
+    //     let deinflected_suffix = self.deinflected();
+    //     let base = if text.len() >= inflected_literal.len() {
+    //         &text[..text.len() - inflected_literal.len()]
+    //     } else {
+    //         ""
+    //     };
+    //     format!("{base}{deinflected_suffix}")
+    // }
+
     fn deinflect_generic_suffix(&self, text: &str) -> String {
-        let inflected_pattern = self.inflected();
-        // Remove the trailing '$' if it exists.
-        let inflected_literal = if inflected_pattern.ends_with('$') {
-            &inflected_pattern[..inflected_pattern.len() - 1]
-        } else {
-            inflected_pattern
-        };
+        let regex = self.is_inflected_regex();
         let deinflected_suffix = self.deinflected();
-        let base = if text.len() >= inflected_literal.len() {
-            &text[..text.len() - inflected_literal.len()]
-        } else {
-            ""
-        };
-        format!("{base}{deinflected_suffix}")
+        // Use the regex to replace the matched suffix. This is guaranteed to be correct.
+        regex.replace(text, deinflected_suffix).to_string()
     }
 
     fn deinflect_generic_prefix(&self, text: &str) -> String {
