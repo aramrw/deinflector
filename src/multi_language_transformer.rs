@@ -104,12 +104,19 @@ mod mlt {
     use pretty_assertions::assert_eq as passert_eq;
 
     #[test]
-    fn transform() {
+    fn transform_jp() {
         let json: &str = include_str!("../tests/multi_language_transformer/transform.json");
         let expected: Vec<TransformedText> = serde_json::from_str(json).unwrap();
         let mlt = MultiLanguageTransformer::default();
         let res = mlt.transform("ja", "流れて");
         passert_eq!(res, expected);
+        dbg!(res);
+    }
+
+    #[test]
+    fn transform_es() {
+        let mlt = MultiLanguageTransformer::default();
+        let res = mlt.transform("es", "bueno");
         dbg!(res);
     }
 }
