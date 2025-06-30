@@ -12,7 +12,8 @@
 - [ ] Korean
 - [ ] Italian
 
-### [Adding Language Yomitan Docs](https://github.com/yomidevs/yomitan/blob/master/docs/development/language-features.md)
+### Adding a new language
+- Should read this first before adding a language [Adding Language Yomitan Docs](https://github.com/yomidevs/yomitan/blob/master/docs/development/language-features.md)
 #### Rough Outline
 - Fork this repo's main branch, then make a branch for your PR. 
 - Find new [language/`<iso>` folder](https://github.com/yomidevs/yomitan/tree/2fc09f9b2d2f130ea18ae117be15f5683bc13440/ext/js/language) from Yomitan
