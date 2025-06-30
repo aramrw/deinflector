@@ -28,5 +28,5 @@ wana_kana = "=4.0.0"
 phf = { version = "0.11.3", features = ["macros"] }
 
 # my repos
-kanji_processor = { version = "*" }
+kanji_processor = { version = "0.0.11" }
 
