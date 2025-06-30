@@ -11,13 +11,12 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer, Serialize};
 use snafu::ResultExt;
 use std::collections::HashMap;
-use strace::{dbug, pt};
 
 use crate::{
     descriptors::{JapanesePreProcessors, LanguageDescriptor, PreAndPostProcessors},
     en::en_transforms::{PARTICLES_DISJUNCTION, PHRASAL_VERB_WORD_DISJUNCTION},
     ja::ja_transforms::JAPANESE_TRANSFORMS_DESCRIPTOR,
-    japanese::is_string_partially_japanese,
+    ja::japanese::is_string_partially_japanese,
     text_preprocessors::{
         ALPHABETIC_TO_HIRAGANA, ALPHANUMERIC_WIDTH_VARIANTS, COLLAPSE_EMPHATIC_SEQUENCES,
         CONVERT_HALF_WIDTH_CHARACTERS, CONVERT_HIRAGANA_TO_KATAKANA,
@@ -31,6 +30,12 @@ pub struct InternalTransform {
     pub rules: Vec<InternalRule>,
     pub heuristic: Regex,
     pub description: Option<&'static str>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct InternalInflectionRuleChainCandidate {
+    pub source: InflectionSource,
+    pub inflection_rules: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -57,6 +62,9 @@ impl RuleDeinflectFnTrait for InternalRule {
     }
     fn inflected_str(&self) -> Option<&str> {
         self.inflected_str.as_deref()
+    }
+    fn is_inflected_regex(&self) -> &Regex {
+        &self.is_inflected
     }
     fn deinflected(&self) -> &str {
         self.deinflected
@@ -101,10 +109,10 @@ pub struct LanguageTransformDescriptorInternal {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct InflectionRuleChainCandidate {
     pub source: InflectionSource,
-    pub inflection_rules: Vec<String>,
+    pub inflection_rules: InflectionRuleChain,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum InflectionSource {
     Algorithm,
@@ -116,8 +124,8 @@ pub type InflectionRuleChain = Vec<InflectionRule>;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct InflectionRule {
-    pub name: &'static str,
-    pub description: Option<&'static str>,
+    pub name: String,
+    pub description: Option<String>,
 }
 
 /// Errors for [`LanguageTransformer`].
@@ -161,7 +169,7 @@ impl std::fmt::Debug for ConditionError {
 }
 
 /// [`MultiLanguageTransformer`]'s inner language specific deconjugator.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct LanguageTransformer {
     next_flag_index: usize,
     transforms: Vec<InternalTransform>,
@@ -171,12 +179,7 @@ pub struct LanguageTransformer {
 
 impl LanguageTransformer {
     pub fn new() -> Self {
-        Self {
-            next_flag_index: 0,
-            transforms: Vec::new(),
-            condition_type_to_condition_flags_map: IndexMap::new(),
-            part_of_speech_to_condition_flags_map: IndexMap::new(),
-        }
+        Self::default()
     }
 
     fn clear(&mut self) {
@@ -353,11 +356,13 @@ impl LanguageTransformer {
                             text: text.clone(),
                             trace: trace.clone(),
                         };
-                        pt!("error", "{}", e);
+                        println!("[error]: {e}");
                         continue;
                     }
 
                     let new_text = rule.deinflect(&text);
+                    // --- TEMPORARY DEBUGGING ---
+                    // --- END DEBUGGING ---
                     let new_frame = TraceFrame {
                         transform: transform_id.into(),
                         rule_index: j,
@@ -388,7 +393,7 @@ impl LanguageTransformer {
 
     pub fn get_user_facing_inflection_rules(
         &self,
-        inflection_rules: &[&'static str],
+        inflection_rules: &[String],
     ) -> InflectionRuleChain {
         inflection_rules
             .iter()
@@ -399,12 +404,16 @@ impl LanguageTransformer {
                     .find(|transform| transform.id == *rule);
                 if let Some(full_rule) = full_rule {
                     return InflectionRule {
-                        name: full_rule.name,
-                        description: full_rule.description,
+                        name: full_rule.name.to_string(),
+                        description: full_rule
+                            .description
+                            .into_iter()
+                            .map(|str| Some(str.to_string()))
+                            .collect(),
                     };
                 }
                 InflectionRule {
-                    name: rule,
+                    name: rule.to_string(),
                     description: None,
                 }
             })
@@ -600,6 +609,11 @@ pub struct TransformI18n {
     pub description: Option<&'static str>,
 }
 
+impl Display for DeinflectFnType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
 /// Holds every deinflect variant
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum DeinflectFnType {
@@ -608,11 +622,23 @@ pub enum DeinflectFnType {
     GenericWholeWord,
     EnCreatePhrasalVerbInflection,
     EnPhrasalVerbInterposedObjectRule,
-}
-impl Display for DeinflectFnType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
-    }
+    GenericStemChange {
+        stem_from: &'static str,
+        stem_to: &'static str,
+        // The regex pattern for the endings
+        ending_re: &'static str,
+        ending_to: &'static str,
+    },
+    SpecialCasedStemChange {
+        prefix: &'static str,
+        special_stem_from: &'static str,
+        special_stem_to: &'static str,
+        default_stem_from: &'static str,
+        default_stem_to: &'static str,
+        ending_re: &'static str,
+        ending_to: &'static str,
+    },
+    Pronominal,
 }
 
 /// Trait for Rule's to deinflect text
@@ -622,40 +648,154 @@ pub trait RuleDeinflectFnTrait: 'static {
     fn deinflect_fn_type(&self) -> DeinflectFnType;
     fn inflected(&self) -> &str;
     fn inflected_str(&self) -> Option<&str>;
+    fn is_inflected_regex(&self) -> &Regex;
     fn deinflected(&self) -> &str;
     /// Matches on [`DeinflectFnType`]
     fn deinflect(&self, text: &str) -> String {
         match self.deinflect_fn_type() {
             DeinflectFnType::GenericSuffix => self.deinflect_generic_suffix(text),
             DeinflectFnType::GenericPrefix => self.deinflect_generic_prefix(text),
+            DeinflectFnType::GenericWholeWord => self.deinflected().to_string(),
             DeinflectFnType::EnCreatePhrasalVerbInflection => {
                 self.english_create_phrasal_verb_inflection_deinflect(text)
             }
             DeinflectFnType::EnPhrasalVerbInterposedObjectRule => {
                 Self::english_create_phrasal_verb_interposed_object_rule(text)
             }
-            _ => panic!(
-                "failed to call `.deinflect(${text})` because deinflect function has not been implemented yet for: {}",
-                self.deinflect_fn_type()
-            ),
-        }
+                // Destructure the enum to get the 'replacement' value
+            DeinflectFnType::Pronominal => {
+                let regex_to_use = self.is_inflected_regex();
+
+                // .captures() to get the groups explicitly.
+                // unwrap because this function is only called
+                // after a successful `is_match` check (in transform())
+                let captures = regex_to_use.captures(text).unwrap().unwrap();
+
+                // group 0 is the full match, 
+                // 1 is the pronoun, 2 is the stem, 3 is the ending.
+                let verb_stem = captures.get(2).unwrap().as_str();
+                let verb_ending = captures.get(3).unwrap().as_str();
+                format!("{}{}{}", verb_stem, verb_ending, "se")
+            }
+
+            // Destructure to get all the stem-change parameters
+            DeinflectFnType::GenericStemChange { stem_from, stem_to, ending_re, ending_to } => {
+                self.deinflect_generic_stem_change(text, stem_from, stem_to, ending_re, ending_to)
+            }
+
+            // Destructure to get all the special-cased stem-change parameters
+            DeinflectFnType::SpecialCasedStemChange {
+                prefix,
+                special_stem_from,
+                special_stem_to,
+                default_stem_from,
+                default_stem_to,
+                ending_re,
+                ending_to
+            } => {
+                self.deinflect_special_cased_stem_change(
+                    text,
+                    prefix,
+                    special_stem_from,
+                    special_stem_to,
+                    default_stem_from,
+                    default_stem_to,
+                    ending_re,
+                    ending_to
+                )
+            }
+                _ => panic!(
+                    "failed to call `.deinflect(${text})` because deinflect function has not been implemented yet for: {}",
+                    self.deinflect_fn_type()
+                ),
+            }
     }
 
+    /// Deinflects a verb with a standard stem change (e.g., e->ie, o->ue).
+    /// This is a direct translation of the JS logic: term.replace(stem, ...).replace(ending, ...)
+    fn deinflect_generic_stem_change(
+        &self,
+        text: &str,
+        stem_from: &'static str,
+        stem_to: &'static str,
+        ending_re: &'static str,
+        ending_to: &'static str,
+    ) -> String {
+        // Step 1: Replicate `term.replace(/ie/, 'e')`
+        // This replaces the *first* occurrence of the stem, exactly like the JS.
+        let after_stem_replace = text.replacen(stem_from, stem_to, 1);
+
+        // Step 2: Replicate `.replace(/(e|es|e|en)$/, 'ar')`
+        // Create a regex for the ending and replace it.
+        let ending_regex = Regex::new(ending_re).expect("Invalid ending regex in rule");
+        let final_text = ending_regex.replace(&after_stem_replace, ending_to);
+
+        final_text.to_string()
+    }
+
+    /// Deinflects a stem-changing verb that has a special case,
+    /// like "jugar" (u->ue) or "oler" (o->hue).
+    fn deinflect_special_cased_stem_change(
+        &self,
+        text: &str,
+        special_case_prefix: &'static str,
+        special_stem_from: &'static str,
+        special_stem_to: &'static str,
+        default_stem_from: &'static str,
+        default_stem_to: &'static str,
+        ending_re: &'static str,
+        ending_to: &'static str,
+    ) -> String {
+        let (stem_from, stem_to) = if text.starts_with(special_case_prefix) {
+            // --- SPECIAL CASE --- (e.g., term is "jueguen")
+            (special_stem_from, special_stem_to)
+        } else {
+            // --- DEFAULT CASE --- (e.g., term is "cuenten")
+            (default_stem_from, default_stem_to)
+        };
+
+        // The logic is now identical to the generic function, just with the chosen parameters.
+
+        // Step 1: Replace the stem (e.g., "ue" with "u" for jugar, or "ue" with "o" for contar)
+        let after_stem_replace = text.replacen(stem_from, stem_to, 1);
+
+        // Step 2: Replace the ending
+        let ending_regex = Regex::new(ending_re).expect("Invalid ending regex in rule");
+        let final_text = ending_regex.replace(&after_stem_replace, ending_to);
+
+        final_text.to_string()
+    }
+
+    /// Deinflects a reflexive verb by replacing the pronoun with "se".
+    /// This translates the JS: term.replace(REFLEXIVE_PATTERN, '$1se')
+    fn deinflect_pronominal(&self, text: &str, replacement: &'static str) -> String {
+        let regex_to_use = &self.is_inflected_regex();
+        regex_to_use.replace(text, replacement).to_string()
+    }
+
+    // either one of these might be correct, needs more testing
+    // fn deinflect_generic_suffix(&self, text: &str) -> String {
+    //     let inflected_pattern = self.inflected();
+    //     // Remove the trailing '$' if it exists.
+    //     let inflected_literal = if inflected_pattern.ends_with('$') {
+    //         &inflected_pattern[..inflected_pattern.len() - 1]
+    //     } else {
+    //         inflected_pattern
+    //     };
+    //     let deinflected_suffix = self.deinflected();
+    //     let base = if text.len() >= inflected_literal.len() {
+    //         &text[..text.len() - inflected_literal.len()]
+    //     } else {
+    //         ""
+    //     };
+    //     format!("{base}{deinflected_suffix}")
+    // }
+
     fn deinflect_generic_suffix(&self, text: &str) -> String {
-        let inflected_pattern = self.inflected();
-        // Remove the trailing '$' if it exists.
-        let inflected_literal = if inflected_pattern.ends_with('$') {
-            &inflected_pattern[..inflected_pattern.len() - 1]
-        } else {
-            inflected_pattern
-        };
+        let regex = self.is_inflected_regex();
         let deinflected_suffix = self.deinflected();
-        let base = if text.len() >= inflected_literal.len() {
-            &text[..text.len() - inflected_literal.len()]
-        } else {
-            ""
-        };
-        format!("{base}{deinflected_suffix}")
+        // Use the regex to replace the matched suffix. This is guaranteed to be correct.
+        regex.replace(text, deinflected_suffix).to_string()
     }
 
     fn deinflect_generic_prefix(&self, text: &str) -> String {
@@ -678,7 +818,7 @@ pub trait RuleDeinflectFnTrait: 'static {
     fn english_create_phrasal_verb_inflection_deinflect(&self, text: &str) -> String {
         let inflected = self.inflected_str().unwrap();
         let deinflected = self.deinflected();
-        dbug!(deinflected);
+        //dbg!(deinflected);
         let pattern = format!(
             r"(?<=){}(?= (?:{}))",
             fancy_regex::escape(inflected),
@@ -724,13 +864,16 @@ impl RuleDeinflectFnTrait for SuffixRule {
     fn deinflect_fn_type(&self) -> DeinflectFnType {
         self.deinflect_fn
     }
+    fn is_inflected_regex(&self) -> &Regex {
+        &self.is_inflected
+    }
     fn inflected(&self) -> &str {
         let str = self.is_inflected.as_str();
         let res = (match str.ends_with('$') {
             true => &str[..str.len() - 1],
             false => str,
         }) as _;
-        dbug!(("getting inflected() from trait: {res}"));
+        //dbug!(("getting inflected() from trait: {res}"));
         res
     }
     fn inflected_str(&self) -> Option<&str> {
@@ -802,17 +945,6 @@ pub struct Rule {
     pub conditions_out: &'static [&'static str],
 }
 
-/// Compares the original &str of two regexp then cmp
-/// Used with [`Derivative`]
-///
-/// # Example
-///
-/// ```
-/// struct Foo {
-///     #[derivative(PartialEq(compare_with = "partialeq_regex"))]
-///     regexp: Regex,
-/// }
-/// ```
 pub fn partialeq_regex(x: &Regex, y: &Regex) -> bool {
     let xstr = x.as_str();
     let ystr = y.as_str();
@@ -822,6 +954,9 @@ pub fn partialeq_regex(x: &Regex, y: &Regex) -> bool {
 impl RuleDeinflectFnTrait for Rule {
     fn deinflect_fn_type(&self) -> DeinflectFnType {
         self.deinflect_fn
+    }
+    fn is_inflected_regex(&self) -> &Regex {
+        &self.is_inflected
     }
     fn inflected(&self) -> &str {
         let str = self.is_inflected.as_str();
@@ -984,5 +1119,3 @@ mod language_transformer_tests {
         assert_eq!(condition_flags_map, assert_map);
     }
 }
-
-

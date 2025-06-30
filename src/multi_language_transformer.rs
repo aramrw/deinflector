@@ -7,6 +7,7 @@ use crate::{
 
 // key: language (ie: "en", "ja")
 // valueL LanguageTransformer
+#[derive(Clone, Debug)]
 pub struct MultiLanguageTransformer {
     inner: HashMap<&'static str, LanguageTransformer>,
 }
@@ -33,7 +34,7 @@ impl MultiLanguageTransformer {
         }
     }
 
-    pub(crate) fn get_condition_flags_from_parts_of_speech(
+    pub fn get_condition_flags_from_parts_of_speech(
         &self,
         language: &str,
         parts_of_speech: &[String],
@@ -44,7 +45,7 @@ impl MultiLanguageTransformer {
             .unwrap_or(0)
     }
 
-    pub(crate) fn get_condition_flags_from_condition_types(
+    pub fn get_condition_flags_from_condition_types(
         &self,
         language: &str,
         condition_types: &[String],
@@ -55,7 +56,7 @@ impl MultiLanguageTransformer {
             .unwrap_or(0)
     }
 
-    pub(crate) fn get_condition_flags_from_condition_type(
+    pub fn get_condition_flags_from_condition_type(
         &self,
         language: &str,
         condition_type: &str,
@@ -66,7 +67,7 @@ impl MultiLanguageTransformer {
             .unwrap_or(0)
     }
 
-    pub(crate) fn transform(&self, language: &str, source_text: &str) -> Vec<TransformedText> {
+    pub fn transform(&self, language: &str, source_text: &str) -> Vec<TransformedText> {
         match self.inner.get(language) {
             Some(lt) => lt.transform(source_text),
             None => vec![TransformedText::create_transformed_text(
@@ -77,17 +78,17 @@ impl MultiLanguageTransformer {
         }
     }
 
-    pub(crate) fn get_user_facing_inflection_rules(
+    pub fn get_user_facing_inflection_rules(
         &self,
         language: &str,
-        inflection_rules: &[&'static str],
+        inflection_rules: &[String],
     ) -> InflectionRuleChain {
         match self.inner.get(language) {
             Some(lt) => lt.get_user_facing_inflection_rules(inflection_rules),
             None => inflection_rules
                 .iter()
                 .map(|rule| InflectionRule {
-                    name: rule,
+                    name: rule.clone(),
                     description: None,
                 })
                 .collect(),
@@ -103,12 +104,19 @@ mod mlt {
     use pretty_assertions::assert_eq as passert_eq;
 
     #[test]
-    fn transform() {
+    fn transform_jp() {
         let json: &str = include_str!("../tests/multi_language_transformer/transform.json");
         let expected: Vec<TransformedText> = serde_json::from_str(json).unwrap();
         let mlt = MultiLanguageTransformer::default();
         let res = mlt.transform("ja", "流れて");
         passert_eq!(res, expected);
+        dbg!(res);
+    }
+
+    #[test]
+    fn transform_es() {
+        let mlt = MultiLanguageTransformer::default();
+        let res = mlt.transform("es", "bueno");
         dbg!(res);
     }
 }

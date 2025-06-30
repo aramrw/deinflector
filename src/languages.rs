@@ -84,13 +84,9 @@ pub fn get_all_language_text_processors() -> Vec<LanguageAndProcessors> {
 
     for lang_descriptor in LANGUAGE_DESCRIPTOR_MAP.values() {
         let iso = lang_descriptor.iso;
-        let preprocessors: Vec<TextProcessorWithId> = lang_descriptor.text_processors.pre.clone();
-        let postprocessors: Vec<TextProcessorWithId> = lang_descriptor.text_processors.post.clone();
-        processor_results.push(LanguageAndProcessors {
-            iso,
-            preprocessors,
-            postprocessors,
-        });
+        let pre: Vec<TextProcessorWithId> = lang_descriptor.text_processors.pre.clone();
+        let post: Vec<TextProcessorWithId> = lang_descriptor.text_processors.post.clone();
+        processor_results.push(LanguageAndProcessors { iso, pre, post });
     }
     processor_results
 }

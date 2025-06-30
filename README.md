@@ -5,11 +5,12 @@ However it has no real hard connection to yomichan_rs so it can be used standalo
 ### Roadmap (Soft Priority Ordering)
 - [x] Japanese
 - [x] English
-- [ ] Spanish
-- [ ] Farsi
+- [x] Spanish
 - [ ] Arabic
+- [ ] Farsi
 - [ ] Russian
 - [ ] Korean
 - [ ] Italian
 
-If you want your language added make a pull request or add it yourself and send a PR
+### [Adding Language Yomitan Docs](https://github.com/yomidevs/yomitan/blob/master/docs/development/language-features.md)
+1. Convert `$language` folder in yomitan
