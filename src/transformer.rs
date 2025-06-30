@@ -708,7 +708,7 @@ pub trait RuleDeinflectFnTrait: 'static {
                     "failed to call `.deinflect(${text})` because deinflect function has not been implemented yet for: {}",
                     self.deinflect_fn_type()
                 ),
-            }
+        }
     }
 
     /// Deinflects a verb with a standard stem change (e.g., e->ie, o->ue).

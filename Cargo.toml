@@ -1,24 +1,32 @@
 [package]
-name = "language_transformer"
+name = "deinflector"
+authors = ["aramrw"]
 version = "0.0.1"
+description = "Attempts to be a 1 to 1 reimplementation of Yomitan's MultiLanguageTransformer."
 edition = "2021"
+repository = "https://github.com/aramrw/deinflector"
+license = "MIT"
+keywords = ["yomichan", "yomichan_rs", "deinflect", "multi language transformer"]
+exclude = ["tests"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-derivative = "2.2.0"
-derive_more = { version = "2.0.1", features = ["debug"] }
-fancy-regex = "0.14.0"
-indexmap = "2.7.1"
-pretty_assertions = "1.4.1"
-serde = { version = "1.0.217", features = ["derive"] }
-serde_json = "1.0.138"
-snafu = "0.8.5"
+derivative = "=2.2.0"
+derive_more = { version = "=2.0.1", features = ["debug"] }
+fancy-regex = "=0.14.0"
+indexmap = "=2.7.1"
+pretty_assertions = "=1.4.1"
+serde = { version = "=1.0.217", features = ["derive"] }
+serde_json = "=1.0.138"
+snafu = "=0.8.5"
 thiserror = "*"
-unicode-normalization = "0.1.24"
-unicode-segmentation = "1.12.0"
-wana_kana = "4.0.0"
-# git repos
-kanji_processor = { git = "https://github.com/aramrw/yomichan_rs.git", branch = "master", package = "kanji_processor" }
+unicode-normalization = "=0.1.24"
+unicode-segmentation = "=1.12.0"
+wana_kana = "=4.0.0"
 phf = { version = "0.11.3", features = ["macros"] }
+
+# my repos
+kanji_processor = { version = "*" }
+
