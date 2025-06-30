@@ -6,7 +6,7 @@ description = "Attempts to be a 1 to 1 reimplementation of Yomitan's MultiLangua
 edition = "2021"
 repository = "https://github.com/aramrw/deinflector"
 license = "MIT"
-keywords = ["yomichan", "yomichan_rs", "deinflect", "multi language transformer"]
+keywords = ["yomichan", "yomichan_rs", "deinflect", "yomitan", "language-transformer"]
 exclude = ["tests"]
 
 [lib]
