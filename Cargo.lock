@@ -133,6 +133,7 @@ checksum = "8c9c992b02b5b4c94ea26e32fe5bccb7aa7d9f390ab5c1221ff895bc7ea8b652"
 dependencies = [
  "equivalent",
  "hashbrown",
+ "serde",
 ]
 
 [[package]]
@@ -152,9 +153,11 @@ checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 
 [[package]]
 name = "kanji_processor"
-version = "0.1.0"
-source = "git+https://github.com/aramrw/yomichan_rs.git?branch=master#c78780f6182d9ddeaca0763682bf14084a34a2aa"
+version = "0.0.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "204bb444f5deac80a0257be164559486322a546bc42e388c480646f4ce0c351a"
 dependencies = [
+ "indexmap",
  "regex",
  "serde",
  "serde_json",
