@@ -1,5 +1,4 @@
 #![allow(dead_code, unused_imports)]
-#![feature(type_alias_impl_trait)]
 
 pub mod cjk_utils;
 pub mod descriptors;

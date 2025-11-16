@@ -106,11 +106,13 @@ pub struct LanguageTransformDescriptorInternal {
     part_of_speech_to_condition_flags_map: ConditionTypeToConditionFlagsMap,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Hash)]
 pub struct InflectionRuleChainCandidate {
     pub source: InflectionSource,
     pub inflection_rules: InflectionRuleChain,
 }
+impl Eq for InflectionRuleChainCandidate {}
+
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -122,11 +124,13 @@ pub enum InflectionSource {
 
 pub type InflectionRuleChain = Vec<InflectionRule>;
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Hash)]
 pub struct InflectionRule {
     pub name: String,
     pub description: Option<String>,
 }
+impl Eq for InflectionRule {}
+
 
 /// Errors for [`LanguageTransformer`].
 #[derive(snafu::Snafu, Debug)]
