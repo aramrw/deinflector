@@ -127,10 +127,10 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("ces", "z", &["np"], &["ns"], RuleType::Suffix),
                 ]
                 .into_iter()
-                .chain(["a", "e", "i", "o", "u"].into_iter().map(|v| {
+                .chain(["a", "e", "i", "o", "u"].into_iter().map(|vowel| {
                     inflection(
-                        format!("{v}ses").as_str(),
-                        format!("{}s", add_accent(v)).leak(),
+                        format!("{vowel}ses").as_str(),
+                        format!("{}s", add_accent(vowel)).leak(),
                         &["np"],
                         &["ns"],
                         RuleType::Suffix,
@@ -1343,9 +1343,9 @@ pub(crate) static ES_PARTICIPLE_TESTS: LazyLock<[TransformTest; 5]> = LazyLock::
 
 pub(crate) static ES_REFLEXIVE_TESTS: LazyLock<[TransformTest; 3]> = LazyLock::new(|| {
     [
-        // 'reflexive' transform: lavarse -> lavar
-        // Your JS had term: 'lavar', source: 'lavarse'. This is backwards.
-        // The de-inflector goes from source -> term. So, `lavarse` de-inflects to `lavar`.
+        // reflexive transform: lavarse -> lavar
+        //  lavar, source: lavarse This is backwards
+        // The de-inflector goes from source -> term. So, lavarse de-inflects to lavar
         TransformTest {
             term: "lavar",
             sources: vec![LanguageTransformerTestCase {
