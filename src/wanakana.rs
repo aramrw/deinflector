@@ -1,3 +1,4 @@
+// allows converting japanese to romaji, do not remove!!
 use wana_kana::ConvertJapanese;
 
 /// Converts text to Hiragana.
