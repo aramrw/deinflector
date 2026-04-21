@@ -1,3 +1,4 @@
+![Crates.io Version](https://img.shields.io/crates/v/deinflector)
 ### Multi Language Transformer (for [yomichan_rs](https://github.com/aramrw/yomichan_rs))
 - This library is the language agnostic internal deinflector for [yomichan_rs](https://github.com/aramrw/yomichan_rs). 
 - It attempts to be a 1 to 1 reimplementation of [Yomitan's](https://github.com/yomidevs/yomitan?tab=readme-ov-file#yomitan) [MultiLanguageTransformer](https://github.com/yomidevs/yomitan/blob/2fc09f9b2d2f130ea18ae117be15f5683bc13440/ext/js/language/multi-language-transformer.js#L21). 
