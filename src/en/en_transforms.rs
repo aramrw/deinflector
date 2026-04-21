@@ -1111,7 +1111,7 @@ pub(crate) mod entransforms {
         let mut lt = LanguageTransformer::new();
         lt.add_descriptor(&ENGLISH_TRANSFORMS_DESCRIPTOR).unwrap();
 
-        for (i, test) in EN_TRANSFORM_TESTS.iter().enumerate() {
+        for (_, test) in EN_TRANSFORM_TESTS.iter().enumerate() {
             let term = test.term;
             for case in &test.sources {
                 let source = case.inner;
