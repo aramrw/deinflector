@@ -1,7 +1,7 @@
 [package]
 name = "deinflector"
 authors = ["aramrw"]
-version = "0.0.1"
+version = "0.0.12"
 description = "Attempts to be a 1 to 1 reimplementation of Yomitan's MultiLanguageTransformer."
 edition = "2021"
 repository = "https://github.com/aramrw/deinflector"
