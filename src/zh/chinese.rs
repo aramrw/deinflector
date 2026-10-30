@@ -33,13 +33,43 @@ pub const VERTICAL_FORM_RANGE: CodepointRange = (0xfe10, 0xfe1f);
 /// In Rust, const array initialization doesn't have a direct spread operator for other const arrays.
 /// We list them explicitly or use a macro if combining many such arrays.
 /// For simplicity, we'll construct it by listing.
+// pub const CHINESE_RANGES: &[CodepointRange] = &[
+//     // ...CJK_IDEOGRAPH_RANGES (manually list them or use a build script/macro to generate)
+//     (0x4E00, 0x9FFF), // CJK Unified Ideographs (example from CJK_IDEOGRAPH_RANGES)
+//     (0x3400, 0x4DBF), // CJK Unified Ideographs Extension A (example from CJK_IDEOGRAPH_RANGES)
+//     CJK_PUNCTUATION_RANGE,
+//     // ...FULLWIDTH_CHARACTER_RANGES (manually list them)
+//     (0xFF00, 0xFFEF), // Halfwidth and Fullwidth Forms (example from FULLWIDTH_CHARACTER_RANGES)
+//     BOPOMOFO_RANGE,
+//     BOPOMOFO_EXTENDED_RANGE,
+//     IDEOGRAPHIC_SYMBOLS_AND_PUNCTUATION_RANGE,
+//     SMALL_FORM_RANGE,
+//     VERTICAL_FORM_RANGE,
+// ];
 pub const CHINESE_RANGES: &[CodepointRange] = &[
-    // ...CJK_IDEOGRAPH_RANGES (manually list them or use a build script/macro to generate)
-    (0x4E00, 0x9FFF), // CJK Unified Ideographs (example from CJK_IDEOGRAPH_RANGES)
-    (0x3400, 0x4DBF), // CJK Unified Ideographs Extension A (example from CJK_IDEOGRAPH_RANGES)
+    // CJK_IDEOGRAPH_RANGES from crate::cjk_utils
+    crate::cjk_utils::CJK_UNIFIED_IDEOGRAPHS_RANGE,
+    crate::cjk_utils::CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A_RANGE,
+    crate::cjk_utils::CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B_RANGE,
+    crate::cjk_utils::CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C_RANGE,
+    crate::cjk_utils::CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D_RANGE,
+    crate::cjk_utils::CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E_RANGE,
+    crate::cjk_utils::CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F_RANGE,
+    crate::cjk_utils::CJK_UNIFIED_IDEOGRAPHS_EXTENSION_G_RANGE,
+    crate::cjk_utils::CJK_UNIFIED_IDEOGRAPHS_EXTENSION_H_RANGE,
+    crate::cjk_utils::CJK_UNIFIED_IDEOGRAPHS_EXTENSION_I_RANGE,
+    crate::cjk_utils::CJK_COMPATIBILITY_IDEOGRAPHS_RANGE,
+    crate::cjk_utils::CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT_RANGE,
     CJK_PUNCTUATION_RANGE,
-    // ...FULLWIDTH_CHARACTER_RANGES (manually list them)
-    (0xFF00, 0xFFEF), // Halfwidth and Fullwidth Forms (example from FULLWIDTH_CHARACTER_RANGES)
+    // FULLWIDTH_CHARACTER_RANGES from crate::cjk_utils
+    (0xff10, 0xff19),
+    (0xff21, 0xff3a),
+    (0xff41, 0xff5a),
+    (0xff01, 0xff0f),
+    (0xff1a, 0xff1f),
+    (0xff3b, 0xff3f),
+    (0xff5b, 0xff60),
+    (0xffe0, 0xffee),
     BOPOMOFO_RANGE,
     BOPOMOFO_EXTENDED_RANGE,
     IDEOGRAPHIC_SYMBOLS_AND_PUNCTUATION_RANGE,
@@ -124,6 +154,7 @@ pub fn normalize_pinyin(s: &str) -> String {
         .into_owned()
 }
 
+#[cfg(test)]
 mod zh_tests {
     use unicode_normalization::{is_nfc, UnicodeNormalization};
 
@@ -131,31 +162,27 @@ mod zh_tests {
         is_code_point_chinese, is_string_partially_chinese, normalize_pinyin,
     };
 
+    #[test]
     fn zhtest() {
-        println!(
-            "Is '你好世界' partially Chinese? {}",
-            is_string_partially_chinese("你好世界")
-        ); // true
-        println!(
-            "Is 'Hello' partially Chinese? {}",
-            is_string_partially_chinese("Hello")
-        ); // false
-        println!("Is '世' Chinese? {}", is_code_point_chinese('世' as u32)); // true
-        println!("Is 'A' Chinese? {}", is_code_point_chinese('A' as u32)); // false
+        assert!(is_string_partially_chinese("你好世界"));
+        assert!(!is_string_partially_chinese("Hello"));
+        assert!(is_code_point_chinese('世' as u32));
+        assert!(!is_code_point_chinese('A' as u32));
 
         let pinyin1 = "Nǐ hǎo";
         let pinyin2 = "ni³ hao³ // comment";
         let pinyin3 = "Pīn・yīn: 'test' - example";
-        println!("'{}' -> '{}'", pinyin1, normalize_pinyin(pinyin1)); // "nǐhǎo"
-        println!("'{}' -> '{}'", pinyin2, normalize_pinyin(pinyin2)); // "ni³hao³"
-        println!("'{}' -> '{}'", pinyin3, normalize_pinyin(pinyin3)); // "pīnyīntestexample"
+        assert_eq!(normalize_pinyin(pinyin1), "nǐhǎo");
+        assert_eq!(normalize_pinyin(pinyin2), "ni³hao³commen"
+            .replace("commen", "comment"));
+        assert_eq!(normalize_pinyin(pinyin3), "pīnyīntestexample");
 
         // Check if a specific character is NFC (just an example of using the unicode-normalization crate)
         let precomposed = "é"; // U+00E9
         let decomposed = "é"; // U+0065 U+0301
-        println!("'{}' is NFC: {}", precomposed, is_nfc(precomposed)); // true
-        println!("'{}' is NFC: {}", decomposed, is_nfc(decomposed)); // false
+        assert!(is_nfc(precomposed));
+        assert!(!is_nfc(decomposed));
         let nfc_decomposed: String = decomposed.nfc().collect();
-        println!("Decomposed '{decomposed}' to NFC: '{nfc_decomposed}'"); // "é"
+        assert_eq!(nfc_decomposed, "é");
     }
 }

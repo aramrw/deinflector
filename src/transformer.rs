@@ -50,6 +50,9 @@ pub struct InternalRule {
 }
 
 impl RuleDeinflectFnTrait for InternalRule {
+    fn rule_type(&self) -> RuleType {
+        self.rule_type
+    }
     fn deinflect_fn_type(&self) -> DeinflectFnType {
         self.deinflect_fn
     }
@@ -340,7 +343,8 @@ impl LanguageTransformer {
                 let transform_id = transform.id;
                 for (j, rule) in transform.rules.iter().enumerate() {
                     if !Self::conditions_match(conditions, rule.conditions_in)
-                        || !rule.is_inflected.is_match(&text).unwrap()
+                        // || !rule.is_inflected.is_match(&text).unwrap()
+                        || !rule.matches_text(&text)
                     {
                         continue;
                     }
@@ -616,7 +620,8 @@ impl Display for DeinflectFnType {
     }
 }
 /// Holds every deinflect variant
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Derivative)]
+#[derivative(PartialEq, Eq)]
 pub enum DeinflectFnType {
     GenericSuffix,
     GenericPrefix,
@@ -627,7 +632,9 @@ pub enum DeinflectFnType {
         stem_from: &'static str,
         stem_to: &'static str,
         // The regex pattern for the endings
-        ending_re: &'static str,
+        // ending_re: &'static str,
+        #[derivative(PartialEq(compare_with = "partialeq_static_regex"))]
+        ending_re: &'static Regex,
         ending_to: &'static str,
     },
     SpecialCasedStemChange {
@@ -636,21 +643,43 @@ pub enum DeinflectFnType {
         special_stem_to: &'static str,
         default_stem_from: &'static str,
         default_stem_to: &'static str,
-        ending_re: &'static str,
+        // ending_re: &'static str,
+        #[derivative(PartialEq(compare_with = "partialeq_static_regex"))]
+        ending_re: &'static Regex,
         ending_to: &'static str,
     },
     Pronominal,
+}
+
+pub fn partialeq_static_regex(x: &&'static Regex, y: &&'static Regex) -> bool {
+    x.as_str() == y.as_str()
 }
 
 /// Trait for Rule's to deinflect text
 /// Provides `deinflect(&self, &str)` trait method
 /// Used in [`LanguageTransformer`]'s `.transform()` method
 pub trait RuleDeinflectFnTrait: 'static {
+    fn rule_type(&self) -> RuleType;
     fn deinflect_fn_type(&self) -> DeinflectFnType;
     fn inflected(&self) -> &str;
     fn inflected_str(&self) -> Option<&str>;
     fn is_inflected_regex(&self) -> &Regex;
     fn deinflected(&self) -> &str;
+
+    /// Fast literal match for Suffix, Prefix, and WholeWord rules when `inflected_str` is present,
+    /// falling back to `is_inflected_regex()` only for `RuleType::Other`.
+    fn matches_text(&self, text: &str) -> bool {
+        if let Some(lit) = self.inflected_str() {
+            match self.rule_type() {
+                RuleType::Suffix => return text.ends_with(lit),
+                RuleType::Prefix => return text.starts_with(lit),
+                RuleType::WholeWord => return text == lit,
+                RuleType::Other => {}
+            }
+        }
+        self.is_inflected_regex().is_match(text).unwrap()
+    }
+
     /// Matches on [`DeinflectFnType`]
     fn deinflect(&self, text: &str) -> String {
         match self.deinflect_fn_type() {
@@ -719,7 +748,7 @@ pub trait RuleDeinflectFnTrait: 'static {
         text: &str,
         stem_from: &'static str,
         stem_to: &'static str,
-        ending_re: &'static str,
+        ending_re: &'static Regex,
         ending_to: &'static str,
     ) -> String {
         // Step 1: Replicate `term.replace(/ie/, 'e')`
@@ -727,9 +756,9 @@ pub trait RuleDeinflectFnTrait: 'static {
         let after_stem_replace = text.replacen(stem_from, stem_to, 1);
 
         // Step 2: Replicate `.replace(/(e|es|e|en)$/, 'ar')`
-        // Create a regex for the ending and replace it.
-        let ending_regex = Regex::new(ending_re).expect("Invalid ending regex in rule");
-        let final_text = ending_regex.replace(&after_stem_replace, ending_to);
+        // let ending_regex = Regex::new(ending_re).expect("Invalid ending regex in rule");
+        // let final_text = ending_regex.replace(&after_stem_replace, ending_to);
+        let final_text = ending_re.replace(&after_stem_replace, ending_to);
 
         final_text.to_string()
     }
@@ -744,7 +773,7 @@ pub trait RuleDeinflectFnTrait: 'static {
         special_stem_to: &'static str,
         default_stem_from: &'static str,
         default_stem_to: &'static str,
-        ending_re: &'static str,
+        ending_re: &'static Regex,
         ending_to: &'static str,
     ) -> String {
         let (stem_from, stem_to) = if text.starts_with(special_case_prefix) {
@@ -761,8 +790,9 @@ pub trait RuleDeinflectFnTrait: 'static {
         let after_stem_replace = text.replacen(stem_from, stem_to, 1);
 
         // Step 2: Replace the ending
-        let ending_regex = Regex::new(ending_re).expect("Invalid ending regex in rule");
-        let final_text = ending_regex.replace(&after_stem_replace, ending_to);
+        // let ending_regex = Regex::new(ending_re).expect("Invalid ending regex in rule");
+        // let final_text = ending_regex.replace(&after_stem_replace, ending_to);
+        let final_text = ending_re.replace(&after_stem_replace, ending_to);
 
         final_text.to_string()
     }
@@ -793,8 +823,13 @@ pub trait RuleDeinflectFnTrait: 'static {
     // }
 
     fn deinflect_generic_suffix(&self, text: &str) -> String {
-        let regex = self.is_inflected_regex();
         let deinflected_suffix = self.deinflected();
+        if let Some(inflected_literal_suffix) = self.inflected_str() {
+            if let Some(stem) = text.strip_suffix(inflected_literal_suffix) {
+                return format!("{stem}{deinflected_suffix}");
+            }
+        }
+        let regex = self.is_inflected_regex();
         // Use the regex to replace the matched suffix. This is guaranteed to be correct.
         regex.replace(text, deinflected_suffix).to_string()
     }
@@ -819,7 +854,12 @@ pub trait RuleDeinflectFnTrait: 'static {
     fn english_create_phrasal_verb_inflection_deinflect(&self, text: &str) -> String {
         let inflected = self.inflected_str().unwrap();
         let deinflected = self.deinflected();
-        //dbg!(deinflected);
+        if let Some((verb, rest)) = text.split_once(' ') {
+            if let Some(stem) = verb.strip_suffix(inflected) {
+                return format!("{stem}{deinflected} {rest}");
+            }
+        }
+        // Fallback to regex if called outside standard phrasal verb match:
         let pattern = format!(
             r"(?<=){}(?= (?:{}))",
             fancy_regex::escape(inflected),
@@ -827,19 +867,26 @@ pub trait RuleDeinflectFnTrait: 'static {
         );
         let re = Regex::new(&pattern).unwrap();
         let res = re.replace(text, deinflected).to_string();
-        //dbug!("deinflected string:", res);
         res
     }
 
     /// [`DeinflectFnType::EnPhrasalVerbInterposedObjectRule`]
     /// `self` is not necessary for this fn
     fn english_create_phrasal_verb_interposed_object_rule(term: &str) -> String {
-        let pattern = format!(
-            r"(?<=\w) (?:(?!\b({})\b).)+ (?=(?:{}))",
-            &*PHRASAL_VERB_WORD_DISJUNCTION, &*PARTICLES_DISJUNCTION
-        );
-        let re = Regex::new(&pattern).unwrap();
-        re.replace(term, " ").to_string()
+        // let pattern = format!(
+        //     r"(?<=\w) (?:(?!\b({})\b).)+ (?=(?:{}))",
+        //     &*PHRASAL_VERB_WORD_DISJUNCTION, &*PARTICLES_DISJUNCTION
+        // );
+        // let re = Regex::new(&pattern).unwrap();
+        // re.replace(term, " ").to_string()
+        static INTERPOSED_OBJECT_RE: LazyLock<Regex> = LazyLock::new(|| {
+            let pattern = format!(
+                r"(?<=\w) (?:(?!\b({})\b).)+ (?=(?:{}))",
+                &*PHRASAL_VERB_WORD_DISJUNCTION, &*PARTICLES_DISJUNCTION
+            );
+            Regex::new(&pattern).unwrap()
+        });
+        INTERPOSED_OBJECT_RE.replace(term, " ").to_string()
     }
 }
 
@@ -847,54 +894,56 @@ fn regex_default() -> Regex {
     Regex::new(r"\d").unwrap()
 }
 
-#[derive(Debug, Clone)]
-pub struct SuffixRule {
-    //#[serde(rename = "type")]
-    pub rule_type: RuleType,
-    // Use custom deserialization function for `Regex`
-    //#[serde(deserialize_with = "deserialize_regex")]
-    pub is_inflected: fancy_regex::Regex,
-    pub inflected_str: Option<String>,
-    pub deinflected: &'static str,
-    pub deinflect_fn: DeinflectFnType,
-    pub conditions_in: &'static [&'static str],
-    pub conditions_out: &'static [&'static str],
-}
+pub type SuffixRule = Rule;
 
-impl RuleDeinflectFnTrait for SuffixRule {
-    fn deinflect_fn_type(&self) -> DeinflectFnType {
-        self.deinflect_fn
-    }
-    fn is_inflected_regex(&self) -> &Regex {
-        &self.is_inflected
-    }
-    fn inflected(&self) -> &str {
-        let str = self.is_inflected.as_str();
-        let res = (match str.ends_with('$') {
-            true => &str[..str.len() - 1],
-            false => str,
-        }) as _;
-        //dbug!(("getting inflected() from trait: {res}"));
-        res
-    }
-    fn inflected_str(&self) -> Option<&str> {
-        self.inflected_str.as_deref()
-    }
-    fn deinflected(&self) -> &'static str {
-        self.deinflected
-    }
-}
-
-impl PartialEq for SuffixRule {
-    fn eq(&self, other: &Self) -> bool {
-        self.rule_type == other.rule_type
-            && self.is_inflected.as_str() == other.is_inflected.as_str()
-            && self.deinflected == other.deinflected
-            && self.deinflect_fn == other.deinflect_fn
-            && self.conditions_in == other.conditions_in
-            && self.conditions_out == other.conditions_out
-    }
-}
+// #[derive(Debug, Clone)]
+// pub struct SuffixRule {
+//     //#[serde(rename = "type")]
+//     pub rule_type: RuleType,
+//     // Use custom deserialization function for `Regex`
+//     //#[serde(deserialize_with = "deserialize_regex")]
+//     pub is_inflected: fancy_regex::Regex,
+//     pub inflected_str: Option<String>,
+//     pub deinflected: &'static str,
+//     pub deinflect_fn: DeinflectFnType,
+//     pub conditions_in: &'static [&'static str],
+//     pub conditions_out: &'static [&'static str],
+// }
+//
+// impl RuleDeinflectFnTrait for SuffixRule {
+//     fn deinflect_fn_type(&self) -> DeinflectFnType {
+//         self.deinflect_fn
+//     }
+//     fn is_inflected_regex(&self) -> &Regex {
+//         &self.is_inflected
+//     }
+//     fn inflected(&self) -> &str {
+//         let str = self.is_inflected.as_str();
+//         let res = (match str.ends_with('$') {
+//             true => &str[..str.len() - 1],
+//             false => str,
+//         }) as _;
+//         //dbug!(("getting inflected() from trait: {res}"));
+//         res
+//     }
+//     fn inflected_str(&self) -> Option<&str> {
+//         self.inflected_str.as_deref()
+//     }
+//     fn deinflected(&self) -> &'static str {
+//         self.deinflected
+//     }
+// }
+//
+// impl PartialEq for SuffixRule {
+//     fn eq(&self, other: &Self) -> bool {
+//         self.rule_type == other.rule_type
+//             && self.is_inflected.as_str() == other.is_inflected.as_str()
+//             && self.deinflected == other.deinflected
+//             && self.deinflect_fn == other.deinflect_fn
+//             && self.conditions_in == other.conditions_in
+//             && self.conditions_out == other.conditions_out
+//     }
+// }
 
 /// Custom deserialization function for javascript Regex.
 ///
@@ -953,6 +1002,9 @@ pub fn partialeq_regex(x: &Regex, y: &Regex) -> bool {
 }
 
 impl RuleDeinflectFnTrait for Rule {
+    fn rule_type(&self) -> RuleType {
+        self.rule_type
+    }
     fn deinflect_fn_type(&self) -> DeinflectFnType {
         self.deinflect_fn
     }
@@ -970,38 +1022,39 @@ impl RuleDeinflectFnTrait for Rule {
         self.inflected_str.as_deref()
     }
     fn deinflected(&self) -> &'static str {
-        self.deinflected
-            .expect("<self.deinflected: &str> cannot be called on a Rule, you might have meant to pass a SuffixRule")
+        // self.deinflected
+        //     .expect("<self.deinflected: &str> cannot be called on a Rule, you might have meant to pass a SuffixRule")
+        self.deinflected.unwrap_or("")
     }
 }
 
-impl From<SuffixRule> for Rule {
-    fn from(suffix: SuffixRule) -> Self {
-        Self {
-            rule_type: suffix.rule_type,
-            is_inflected: suffix.is_inflected,
-            inflected_str: suffix.inflected_str,
-            deinflected: Some(suffix.deinflected),
-            deinflect_fn: suffix.deinflect_fn,
-            conditions_in: suffix.conditions_in,
-            conditions_out: suffix.conditions_out,
-        }
-    }
-}
-
-impl From<Rule> for SuffixRule {
-    fn from(x: Rule) -> Self {
-        Self {
-            rule_type: x.rule_type,
-            is_inflected: x.is_inflected,
-            inflected_str: x.inflected_str,
-            deinflected: x.deinflected.unwrap_or(""),
-            deinflect_fn: x.deinflect_fn,
-            conditions_in: x.conditions_in,
-            conditions_out: x.conditions_out,
-        }
-    }
-}
+// impl From<SuffixRule> for Rule {
+//     fn from(suffix: SuffixRule) -> Self {
+//         Self {
+//             rule_type: suffix.rule_type,
+//             is_inflected: suffix.is_inflected,
+//             inflected_str: suffix.inflected_str,
+//             deinflected: Some(suffix.deinflected),
+//             deinflect_fn: suffix.deinflect_fn,
+//             conditions_in: suffix.conditions_in,
+//             conditions_out: suffix.conditions_out,
+//         }
+//     }
+// }
+//
+// impl From<Rule> for SuffixRule {
+//     fn from(x: Rule) -> Self {
+//         Self {
+//             rule_type: x.rule_type,
+//             is_inflected: x.is_inflected,
+//             inflected_str: x.inflected_str,
+//             deinflected: x.deinflected.unwrap_or(""),
+//             deinflect_fn: x.deinflect_fn,
+//             conditions_in: x.conditions_in,
+//             conditions_out: x.conditions_out,
+//         }
+//     }
+// }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct RuleI18n {
@@ -1047,7 +1100,7 @@ mod language_transformer_tests {
     /// [`crate::language::transforms::irregular_verb_suffix_inflections`]
     fn rules() {
         #[rustfmt::skip]
-        const JS: [usize; 53] = [ 11, 11, 17, 17, 17, 2, 16, 17, 17, 17, 16, 37, 36, 37, 16, 16, 16, 16, 16, 16, 16, 16, 1, 19, 17, 20, 35, 18, 1, 16, 39, 17, 14, 8, 18, 17, 9, 6, 8, 1, 2, 1, 42, 5, 1, 6, 15, 15, 15, 15, 11, 11, 11];
+        const JS: [usize; 53] = [ 11, 11, 17, 17, 17, 2, 16, 17, 17, 17, 16, 37, 36, 37, 16, 16, 16, 16, 16, 16, 16, 16, 1, 19, 17, 20, 35, 18, 1, 16, 39, 17, 14, 8, 18, 17, 9, 6, 8, 1, 2, 1, 41, 5, 1, 6, 15, 15, 15, 15, 11, 11, 11];
 
         let rust: Vec<(&str, usize)> = JAPANESE_TRANSFORMS_DESCRIPTOR
             .transforms
@@ -1068,9 +1121,9 @@ mod language_transformer_tests {
         let tests = [TransformedText { text: "愛しくありません".to_string(), conditions: 0, trace: vec![] }, TransformedText { text: "愛しくありませる".to_string(), conditions: 3, trace: vec![TraceFrame { transform: "-ん".to_string(), rule_index: 0, text: "愛しくありません".to_string() }] }, TransformedText { text: "愛しくありまする".to_string(), conditions: 64, trace: vec![TraceFrame { transform: "-ん".to_string(), rule_index: 11, text: "愛しくありません".to_string() }] }, TransformedText { text: "愛しくあります".to_string(), conditions: 512, trace: vec![TraceFrame { transform: "negative".to_string(), rule_index: 17, text: "愛しくありません".to_string() }] }, TransformedText { text: "愛しくありむ".to_string(), conditions: 28, trace: vec![TraceFrame { transform: "causative".to_string(), rule_index: 7, text: "愛しくありませる".to_string() }, TraceFrame { transform: "-ん".to_string(), rule_index: 0, text: "愛しくありません".to_string() }] }, TransformedText { text: "愛しくあります".to_string(), conditions: 4, trace: vec![TraceFrame { transform: "potential".to_string(), rule_index: 4, text: "愛しくありませる".to_string() }, TraceFrame { transform: "-ん".to_string(), rule_index: 0, text: "愛しくありません".to_string() }] }, TransformedText { text: "愛しくありる".to_string(), conditions: 3, trace: vec![TraceFrame { transform: "-ます".to_string(), rule_index: 0, text: "愛しくあります".to_string() }, TraceFrame { transform: "negative".to_string(), rule_index: 17, text: "愛しくありません".to_string() }] }, TransformedText { text: "愛しくある".to_string(), conditions: 4, trace: vec![TraceFrame { transform: "-ます".to_string(), rule_index: 9, text: "愛しくあります".to_string() }, TraceFrame { transform: "negative".to_string(), rule_index: 17, text: "愛しくありません".to_string() }] }, TransformedText { text: "愛しい".to_string(), conditions: 256, trace: vec![TraceFrame { transform: "-ます".to_string(), rule_index: 16, text: "愛しくあります".to_string() }, TraceFrame { transform: "negative".to_string(), rule_index: 17, text: "愛しくありません".to_string() }] }];
 
         let tt = lt.transform("愛しくありません");
-        for (i, _test) in tests.iter().enumerate() {
-            if let Some(test) = tt.get(i) {
-                assert_eq!(test, test);
+        for (i, expected) in tests.iter().enumerate() {
+            if let Some(actual) = tt.get(i) {
+                assert_eq!(actual, expected);
             } else {
                 panic!(
                     "rust transform result ({}) contains less transformed strings than the javascript test cases ({})",

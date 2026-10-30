@@ -217,5 +217,43 @@ pub static LANGUAGE_DESCRIPTOR_MAP: LazyLock<IndexMap<&str, LanguageDescriptor>>
                     language_transforms: Some(&*SPANISH_TRANSFORMS_DESCRIPTOR),
                 },
             ),
+            (
+                "yue",
+                LanguageDescriptor {
+                    iso: "yue",
+                    iso639_3: "yue",
+                    name: "Cantonese",
+                    example_text: "讀",
+                    is_text_lookup_worthy: None,
+                    reading_normalizer: None,
+                    text_processors: PreAndPostProcessors {
+                        pre: vec![TextProcessorWithId {
+                            id: "normalize_radical_characters",
+                            processor: NORMALIZE_RADICAL_CHARACTERS,
+                        }],
+                        post: vec![],
+                    },
+                    language_transforms: None,
+                },
+            ),
+            (
+                "zh",
+                LanguageDescriptor {
+                    iso: "zh",
+                    iso639_3: "zho",
+                    name: "Chinese",
+                    example_text: "读",
+                    is_text_lookup_worthy: Some(crate::zh::chinese::is_string_partially_chinese),
+                    reading_normalizer: Some(crate::zh::chinese::normalize_pinyin),
+                    text_processors: PreAndPostProcessors {
+                        pre: vec![TextProcessorWithId {
+                            id: "normalize_radical_characters",
+                            processor: NORMALIZE_RADICAL_CHARACTERS,
+                        }],
+                        post: vec![],
+                    },
+                    language_transforms: None,
+                },
+            ),
         ])
     });

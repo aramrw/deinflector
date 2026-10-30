@@ -24,9 +24,24 @@ pub fn get_language_summaries() -> Vec<LanguageSummary> {
         .collect::<Vec<LanguageSummary>>()
 }
 
+#[test]
 fn test_get_language_summaries() {
-    let s = get_language_summaries();
-    dbg!(s);
+    let summaries = get_language_summaries();
+    let isos: Vec<&str> = summaries.iter().map(|s| s.iso).collect();
+    assert!(isos.contains(&"ja"));
+    assert!(isos.contains(&"en"));
+    assert!(isos.contains(&"es"));
+    assert!(isos.contains(&"yue"));
+    assert!(isos.contains(&"zh"));
+
+    assert!(is_text_lookup_worthy("日本語", "ja"));
+    assert!(!is_text_lookup_worthy("hello", "ja"));
+    assert!(is_text_lookup_worthy("中文", "zh"));
+    assert!(!is_text_lookup_worthy("hello", "zh"));
+    assert!(is_text_lookup_worthy("hello", "en"));
+    assert!(is_text_lookup_worthy("hola", "es"));
+    assert!(is_text_lookup_worthy("廣東話", "yue"));
+    assert!(!is_text_lookup_worthy("hello", "unknown_lang"));
 }
 
 pub fn get_all_language_reading_normalizers() -> Vec<LanguageAndReadingNormalizer> {
@@ -46,9 +61,10 @@ pub fn get_all_language_reading_normalizers() -> Vec<LanguageAndReadingNormalize
 
 pub fn is_text_lookup_worthy(text: &str, language: &str) -> bool {
     if let Some(descriptor) = LANGUAGE_DESCRIPTOR_MAP.get(language) {
-        if let Some(itlw_fn) = descriptor.is_text_lookup_worthy {
-            return itlw_fn(text);
-        }
+        return descriptor.is_text_lookup_worthy.map_or(true, |itlw_fn| itlw_fn(text));
+        // if let Some(itlw_fn) = descriptor.is_text_lookup_worthy {
+        //     return itlw_fn(text);
+        // }
     }
     false
 }

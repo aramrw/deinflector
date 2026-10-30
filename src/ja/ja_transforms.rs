@@ -191,7 +191,7 @@ mod inflection_tests {
         let test = SuffixRule {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("ければ$").unwrap(),
-            deinflected: "い",
+            deinflected: Some("い"),
             inflected_str: Some("ければ".to_string()),
             deinflect_fn: crate::transformer::DeinflectFnType::GenericSuffix,
             conditions_in: &["-ば"],
@@ -1544,6 +1544,27 @@ pub(crate) fn has_term_reasons(
             }
         }
 
+        // check trace reasons if we got this far
+        if let Some(expected) = expected_reasons {
+            if result.trace.len() != expected.len() {
+                rejection_reasons.push(format!(
+                    "Trace length mismatch: expected {}, found {}",
+                    expected.len(),
+                    result.trace.len()
+                ));
+            } else {
+                for (i, (actual, expected)) in result.trace.iter().zip(expected.iter()).enumerate()
+                {
+                    if &actual.transform != expected {
+                        rejection_reasons.push(format!(
+                            "Reason {}: expected '{}', found '{}'",
+                            i, expected, actual.transform
+                        ));
+                    }
+                }
+            }
+        }
+
         // If we had any rejection reasons, log and continue
         if !rejection_reasons.is_empty() {
             rejected.push(format!(
@@ -1553,27 +1574,6 @@ pub(crate) fn has_term_reasons(
                 rejection_reasons.join("\n  ")
             ));
             continue;
-        }
-
-        // check trace reasons if we got this far
-        if let Some(expected) = expected_reasons {
-            if result.trace.len() != expected.len() {
-                return Err(HasTermReasonsError::TraceLengthMismatch {
-                    expected: expected.len(),
-                    found: result.trace.len(),
-                });
-            }
-
-            // Check individual reasons
-            for (i, (actual, expected)) in result.trace.iter().zip(expected.iter()).enumerate() {
-                if &actual.transform != expected {
-                    return Err(HasTermReasonsError::ReasonMismatch {
-                        index: i,
-                        expected: (*expected).to_string(),
-                        found: actual.transform.clone(),
-                    });
-                }
-            }
         }
 
         // Success case
@@ -2899,7 +2899,6 @@ pub static JP_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("めえ", "まい", &[], &["adj-i"], RuleType::Suffix),
                     inflection("ぜえ", "ずい", &[], &["adj-i"], RuleType::Suffix),
                     inflection("っぜえ", "ずい", &[], &["adj-i"], RuleType::Suffix),
-                    inflection("れえ", "らい", &[], &["adj-i"], RuleType::Suffix),
                     inflection("れえ", "らい", &[], &["adj-i"], RuleType::Suffix),
                     inflection("ちぇえ", "ちゃい", &[], &["adj-i"], RuleType::Suffix),
                     inflection("でえ", "どい", &[], &["adj-i"], RuleType::Suffix),

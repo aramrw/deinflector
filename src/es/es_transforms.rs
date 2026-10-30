@@ -462,28 +462,24 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     // -ar verbs
                     inflection("aba", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("abas", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
-                    inflection("aba", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("ábamos", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("abais", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("aban", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     // -er verbs
                     inflection("ía", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("ías", "er", &["v_er"], &["v_er"], RuleType::Suffix),
-                    inflection("ía", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("íamos", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("íais", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("ían", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     // -ir verbs
                     inflection("ía", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("ías", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
-                    inflection("ía", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("íamos", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("íais", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("ían", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     // -ir verbs with stem changes (e.g. reír -> reía)
                     inflection("eía", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("eías", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
-                    inflection("eía", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("eíamos", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("eíais", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("eían", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
@@ -491,21 +487,18 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     // ser
                     inflection("era", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("eras", "ser", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("era", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("éramos", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("erais", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("eran", "ser", &["v"], &["v"], RuleType::WholeWord),
                     // ir
                     inflection("iba", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("ibas", "ir", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("iba", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("íbamos", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("ibais", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("iban", "ir", &["v"], &["v"], RuleType::WholeWord),
                     // ver
                     inflection("veía", "ver", &["v"], &["v"], RuleType::WholeWord),
                     inflection("veías", "ver", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("veía", "ver", &["v"], &["v"], RuleType::WholeWord),
                     inflection("veíamos", "ver", &["v"], &["v"], RuleType::WholeWord),
                     inflection("veíais", "ver", &["v"], &["v"], RuleType::WholeWord),
                     inflection("veían", "ver", &["v"], &["v"], RuleType::WholeWord),
@@ -586,11 +579,11 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("ad", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     // -er verbs
                     inflection("e", "er", &["v_er"], &["v_er"], RuleType::Suffix),
-                    inflection("amos", "ar", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("amos", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("ed", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     // -ir verbs
                     inflection("e", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
-                    inflection("amos", "ar", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("amos", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("id", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     // --- Irregular Affirmative Commands ---
                     inflection("diga", "decir", &["v"], &["v"], RuleType::WholeWord),
@@ -605,15 +598,12 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     // --- Negative Commands ---
                     // -ar verbs
                     inflection("es", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
-                    inflection("emos", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("éis", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     // -er verbs
                     inflection("as", "er", &["v_er"], &["v_er"], RuleType::Suffix),
-                    inflection("amos", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("áis", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     // -ir verbs
                     inflection("as", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
-                    inflection("amos", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("áis", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                 ],
                 i18n: None,
@@ -628,9 +618,6 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     // Regular conditional endings
                     inflection("ía", "", &["v"], &["v"], RuleType::Suffix),
                     inflection("ías", "", &["v"], &["v"], RuleType::Suffix),
-                    // Note: The third rule for 'ía' is a duplicate and can be omitted,
-                    // but included here for a direct 1:1 translation.
-                    inflection("ía", "", &["v"], &["v"], RuleType::Suffix),
                     inflection("íamos", "", &["v"], &["v"], RuleType::Suffix),
                     inflection("íais", "", &["v"], &["v"], RuleType::Suffix),
                     inflection("ían", "", &["v"], &["v"], RuleType::Suffix),
@@ -638,63 +625,54 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     // decir
                     inflection("diría", "decir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("dirías", "decir", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("diría", "decir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("diríamos", "decir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("diríais", "decir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("dirían", "decir", &["v"], &["v"], RuleType::WholeWord),
                     // hacer
                     inflection("haría", "hacer", &["v"], &["v"], RuleType::WholeWord),
                     inflection("harías", "hacer", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("haría", "hacer", &["v"], &["v"], RuleType::WholeWord),
                     inflection("haríamos", "hacer", &["v"], &["v"], RuleType::WholeWord),
                     inflection("haríais", "hacer", &["v"], &["v"], RuleType::WholeWord),
                     inflection("harían", "hacer", &["v"], &["v"], RuleType::WholeWord),
                     // poner
                     inflection("pondría", "poner", &["v"], &["v"], RuleType::WholeWord),
                     inflection("pondrías", "poner", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("pondría", "poner", &["v"], &["v"], RuleType::WholeWord),
                     inflection("pondríamos", "poner", &["v"], &["v"], RuleType::WholeWord),
                     inflection("pondríais", "poner", &["v"], &["v"], RuleType::WholeWord),
                     inflection("pondrían", "poner", &["v"], &["v"], RuleType::WholeWord),
                     // salir
                     inflection("saldría", "salir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("saldrías", "salir", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("saldría", "salir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("saldríamos", "salir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("saldríais", "salir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("saldrían", "salir", &["v"], &["v"], RuleType::WholeWord),
                     // tener
                     inflection("tendría", "tener", &["v"], &["v"], RuleType::WholeWord),
                     inflection("tendrías", "tener", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("tendría", "tener", &["v"], &["v"], RuleType::WholeWord),
                     inflection("tendríamos", "tener", &["v"], &["v"], RuleType::WholeWord),
                     inflection("tendríais", "tener", &["v"], &["v"], RuleType::WholeWord),
                     inflection("tendrían", "tener", &["v"], &["v"], RuleType::WholeWord),
                     // venir
                     inflection("vendría", "venir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("vendrías", "venir", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("vendría", "venir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("vendríamos", "venir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("vendríais", "venir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("vendrían", "venir", &["v"], &["v"], RuleType::WholeWord),
                     // querer
                     inflection("querría", "querer", &["v"], &["v"], RuleType::WholeWord),
                     inflection("querrías", "querer", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("querría", "querer", &["v"], &["v"], RuleType::WholeWord),
                     inflection("querríamos", "querer", &["v"], &["v"], RuleType::WholeWord),
                     inflection("querríais", "querer", &["v"], &["v"], RuleType::WholeWord),
                     inflection("querrían", "querer", &["v"], &["v"], RuleType::WholeWord),
                     // poder
                     inflection("podría", "poder", &["v"], &["v"], RuleType::WholeWord),
                     inflection("podrías", "poder", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("podría", "poder", &["v"], &["v"], RuleType::WholeWord),
                     inflection("podríamos", "poder", &["v"], &["v"], RuleType::WholeWord),
                     inflection("podríais", "poder", &["v"], &["v"], RuleType::WholeWord),
                     inflection("podrían", "poder", &["v"], &["v"], RuleType::WholeWord),
                     // saber
                     inflection("sabría", "saber", &["v"], &["v"], RuleType::WholeWord),
                     inflection("sabrías", "saber", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("sabría", "saber", &["v"], &["v"], RuleType::WholeWord),
                     inflection("sabríamos", "saber", &["v"], &["v"], RuleType::WholeWord),
                     inflection("sabríais", "saber", &["v"], &["v"], RuleType::WholeWord),
                     inflection("sabrían", "saber", &["v"], &["v"], RuleType::WholeWord),
@@ -809,21 +787,18 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     // -ar verbs
                     inflection("e", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("es", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
-                    inflection("e", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("emos", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("éis", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("en", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     // -er verbs
                     inflection("a", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("as", "er", &["v_er"], &["v_er"], RuleType::Suffix),
-                    inflection("a", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("amos", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("áis", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("an", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     // -ir verbs
                     inflection("a", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("as", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
-                    inflection("a", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("amos", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("áis", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("an", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
@@ -831,42 +806,36 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     // dar
                     inflection("dé", "dar", &["v"], &["v"], RuleType::WholeWord),
                     inflection("des", "dar", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("dé", "dar", &["v"], &["v"], RuleType::WholeWord),
                     inflection("demos", "dar", &["v"], &["v"], RuleType::WholeWord),
                     inflection("deis", "dar", &["v"], &["v"], RuleType::WholeWord),
                     inflection("den", "dar", &["v"], &["v"], RuleType::WholeWord),
                     // estar
                     inflection("esté", "estar", &["v"], &["v"], RuleType::WholeWord),
                     inflection("estés", "estar", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("esté", "estar", &["v"], &["v"], RuleType::WholeWord),
                     inflection("estemos", "estar", &["v"], &["v"], RuleType::WholeWord),
                     inflection("estéis", "estar", &["v"], &["v"], RuleType::WholeWord),
                     inflection("estén", "estar", &["v"], &["v"], RuleType::WholeWord),
                     // ser
                     inflection("sea", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("seas", "ser", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("sea", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("seamos", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("seáis", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("sean", "ser", &["v"], &["v"], RuleType::WholeWord),
                     // ir
                     inflection("vaya", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("vayas", "ir", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("vaya", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("vayamos", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("vayáis", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("vayan", "ir", &["v"], &["v"], RuleType::WholeWord),
                     // haber
                     inflection("haya", "haber", &["v"], &["v"], RuleType::WholeWord),
                     inflection("hayas", "haber", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("haya", "haber", &["v"], &["v"], RuleType::WholeWord),
                     inflection("hayamos", "haber", &["v"], &["v"], RuleType::WholeWord),
                     inflection("hayáis", "haber", &["v"], &["v"], RuleType::WholeWord),
                     inflection("hayan", "haber", &["v"], &["v"], RuleType::WholeWord),
                     // saber
                     inflection("sepa", "saber", &["v"], &["v"], RuleType::WholeWord),
                     inflection("sepas", "saber", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("sepa", "saber", &["v"], &["v"], RuleType::WholeWord),
                     inflection("sepamos", "saber", &["v"], &["v"], RuleType::WholeWord),
                     inflection("sepáis", "saber", &["v"], &["v"], RuleType::WholeWord),
                     inflection("sepan", "saber", &["v"], &["v"], RuleType::WholeWord),
@@ -885,8 +854,6 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("ase", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("aras", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("ases", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
-                    inflection("ara", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
-                    inflection("ase", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("áramos", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("ásemos", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("arais", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
@@ -898,8 +865,6 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("iese", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("ieras", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("ieses", "er", &["v_er"], &["v_er"], RuleType::Suffix),
-                    inflection("iera", "er", &["v_er"], &["v_er"], RuleType::Suffix),
-                    inflection("iese", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("iéramos", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("iésemos", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("ierais", "er", &["v_er"], &["v_er"], RuleType::Suffix),
@@ -911,8 +876,6 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("iese", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("ieras", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("ieses", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
-                    inflection("iera", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
-                    inflection("iese", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("iéramos", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("iésemos", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("ierais", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
@@ -925,8 +888,6 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("fuese", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("fueras", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("fueses", "ser", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("fuera", "ser", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("fuese", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("fuéramos", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("fuésemos", "ser", &["v"], &["v"], RuleType::WholeWord),
                     inflection("fuerais", "ser", &["v"], &["v"], RuleType::WholeWord),
@@ -938,8 +899,6 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("fuese", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("fueras", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("fueses", "ir", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("fuera", "ir", &["v"], &["v"], RuleType::WholeWord),
-                    inflection("fuese", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("fuéramos", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("fuésemos", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("fuerais", "ir", &["v"], &["v"], RuleType::WholeWord),
@@ -1036,13 +995,14 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
     ]))
 });
 
-pub(crate) static ES_TRANSFORM_TESTS: LazyLock<[&[TransformTest]; 5]> = LazyLock::new(|| {
+pub(crate) static ES_TRANSFORM_TESTS: LazyLock<[&[TransformTest]; 6]> = LazyLock::new(|| {
     [
         &*ES_PRESENT_INDICITIVE_VERB_TESTS,
         &*ES_NOUN_TESTS,
         &*ES_FEMININE_ADJECTIVE_TESTS,
         &*ES_PARTICIPLE_TESTS,
         &*ES_REFLEXIVE_TESTS,
+        &*ES_IMPERATIVE_AND_STEM_TESTS,
     ]
 });
 
@@ -1373,6 +1333,79 @@ pub(crate) static ES_REFLEXIVE_TESTS: LazyLock<[TransformTest; 3]> = LazyLock::n
                 inner: "me despertar",
                 rule: "v",
                 reasons: vec!["pronominal"],
+            }],
+        },
+    ]
+});
+
+pub(crate) static ES_IMPERATIVE_AND_STEM_TESTS: LazyLock<[TransformTest; 5]> = LazyLock::new(|| {
+    [
+        TransformTest {
+            term: "comer",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "comamos",
+                    rule: "v",
+                    reasons: vec!["imperative"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "comamos",
+                    rule: "v",
+                    reasons: vec!["present subjunctive"],
+                },
+            ],
+        },
+        TransformTest {
+            term: "vivir",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "vivamos",
+                    rule: "v",
+                    reasons: vec!["imperative"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "vivamos",
+                    rule: "v",
+                    reasons: vec!["present subjunctive"],
+                },
+            ],
+        },
+        TransformTest {
+            term: "jugar",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "juegan",
+                    rule: "v",
+                    reasons: vec!["present indicative"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "jueguen",
+                    rule: "v",
+                    reasons: vec!["present subjunctive"],
+                },
+            ],
+        },
+        TransformTest {
+            term: "dormir",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "duermo",
+                    rule: "v",
+                    reasons: vec!["present indicative"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "durmiendo",
+                    rule: "v",
+                    reasons: vec!["progressive"],
+                },
+            ],
+        },
+        TransformTest {
+            term: "pensar",
+            sources: vec![LanguageTransformerTestCase {
+                inner: "pienso",
+                rule: "v",
+                reasons: vec!["present indicative"],
             }],
         },
     ]
