@@ -12,6 +12,10 @@ exclude = ["tests"]
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[[bin]]
+name = "deinflector"
+path = "src/bin/deinflector.rs"
+
 [dependencies]
 derivative = "2.2.0"
 derive_more = { version = "2.0.1", features = ["debug"] }

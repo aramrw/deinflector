@@ -3,6 +3,7 @@ use std::{collections::HashMap, sync::LazyLock};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
+    de::de_transforms::GERMAN_TRANSFORMS_DESCRIPTOR,
     en::en_transforms::ENGLISH_TRANSFORMS_DESCRIPTOR,
     es::es_transforms::SPANISH_TRANSFORMS_DESCRIPTOR,
     ja::{
@@ -14,7 +15,7 @@ use crate::{
     },
     text_preprocessors::{
         ALPHABETIC_TO_HIRAGANA, ALPHANUMERIC_WIDTH_VARIANTS, COLLAPSE_EMPHATIC_SEQUENCES,
-        CONVERT_HALF_WIDTH_CHARACTERS, CONVERT_HIRAGANA_TO_KATAKANA,
+        CONVERT_HALF_WIDTH_CHARACTERS, CONVERT_HIRAGANA_TO_KATAKANA, ESZETT_PREPROCESSOR,
         NORMALIZE_CJK_COMPATIBILITY_CHARACTERS, NORMALIZE_COMBINING_CHARACTERS, STANDARDIZE_KANJI,
     },
     text_processors::{CAPITALIZE_FIRST_LETTER, DECAPITALIZE, NORMALIZE_RADICAL_CHARACTERS},
@@ -190,6 +191,35 @@ pub static LANGUAGE_DESCRIPTOR_MAP: LazyLock<IndexMap<&str, LanguageDescriptor>>
                         post: vec![],
                     },
                     language_transforms: Some(&*ENGLISH_TRANSFORMS_DESCRIPTOR),
+                },
+            ),
+            (
+                "de",
+                LanguageDescriptor {
+                    iso: "de",
+                    iso639_3: "deu",
+                    name: "German",
+                    example_text: "gelesen",
+                    is_text_lookup_worthy: None,
+                    reading_normalizer: None,
+                    text_processors: PreAndPostProcessors {
+                        pre: vec![
+                            TextProcessorWithId {
+                                id: "decapitalize",
+                                processor: DECAPITALIZE,
+                            },
+                            TextProcessorWithId {
+                                id: "capitalize_first_letter",
+                                processor: CAPITALIZE_FIRST_LETTER,
+                            },
+                            TextProcessorWithId {
+                                id: "eszett",
+                                processor: ESZETT_PREPROCESSOR,
+                            },
+                        ],
+                        post: vec![],
+                    },
+                    language_transforms: Some(&*GERMAN_TRANSFORMS_DESCRIPTOR),
                 },
             ),
             (

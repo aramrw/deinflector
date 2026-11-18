@@ -15,6 +15,18 @@ use crate::{
 static REFLEXIVE_PATTERN: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\b(me|te|se|nos|os)\s+(\w+)(ar|er|ir)\b").unwrap());
 
+static ES_ACCENTED_DOUBLE_ENCLITIC_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^(.+[áéíóú][^áéíóú]*)(?:me|te|se|nos|os)(?:lo|la|los|las)$").unwrap()
+});
+
+static ES_ACCENTED_SINGLE_ENCLITIC_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^(.+[áéíóú][^áéíóú]*)(?:me|te|se|nos|os|lo|la|los|las|le|les)$").unwrap()
+});
+
+static ES_SHORT_IMPERATIVE_ENCLITIC_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^(di|haz|pon|ten|ven|sal|ve)(?:me|te|se|nos|os|lo|la|los|las|le|les)$").unwrap()
+});
+
 static ACCENTS: Map<&'static str, &'static str> = phf_map! {
     "a" => "á",
     "e" => "é",
@@ -120,19 +132,19 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
             "plural",
             Transform {
                 name: "plural",
-                description: Some("Plural form of a noun"),
+                description: Some("Plural form of a noun or adjective"),
                 rules: vec![
-                    inflection("s", "", &["np"], &["ns"], RuleType::Suffix),
-                    inflection("es", "", &["np"], &["ns"], RuleType::Suffix),
-                    inflection("ces", "z", &["np"], &["ns"], RuleType::Suffix),
+                    inflection("s", "", &["np", "adj"], &["ns", "adj"], RuleType::Suffix),
+                    inflection("es", "", &["np", "adj"], &["ns", "adj"], RuleType::Suffix),
+                    inflection("ces", "z", &["np", "adj"], &["ns", "adj"], RuleType::Suffix),
                 ]
                 .into_iter()
                 .chain(["a", "e", "i", "o", "u"].into_iter().map(|v| {
                     inflection(
                         format!("{v}ses").as_str(),
                         format!("{}s", add_accent(v)).leak(),
-                        &["np"],
-                        &["ns"],
+                        &["np", "adj"],
+                        &["ns", "adj"],
                         RuleType::Suffix,
                     )
                 }))
@@ -140,8 +152,8 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection(
                         format!("{v}nes").as_str(),
                         format!("{}n", add_accent(v)).leak(),
-                        &["np"],
-                        &["ns"],
+                        &["np", "adj"],
+                        &["ns", "adj"],
                         RuleType::Suffix,
                     )
                 }))
@@ -251,6 +263,16 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("uyes", "uir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("uye", "uir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("uyen", "uir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    // 1st-person -o orthographic changes (-ger/-gir -> -jo, -guir -> -go, -cer/-cir -> -zco/-zo)
+                    generic_stem_change_rule("i", "e", "(jo)", "gir", &["v_ir"], &["v_ir"]),
+                    generic_stem_change_rule("i", "e", "(go)", "guir", &["v_ir"], &["v_ir"]),
+                    inflection("jo", "ger", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("jo", "gir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("go", "guir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("zco", "cer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("zco", "cir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("zo", "cer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("zo", "cir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     // -tener verbs
                     inflection("tengo", "tener", &["v"], &["v"], RuleType::Suffix),
                     inflection("tienes", "tener", &["v"], &["v"], RuleType::Suffix),
@@ -355,6 +377,15 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("qué", "car", &["v"], &["v"], RuleType::Suffix),
                     inflection("gué", "gar", &["v"], &["v"], RuleType::Suffix),
                     inflection("cé", "zar", &["v"], &["v"], RuleType::Suffix),
+                    // -ll / -ñ stems drop i in 3rd-person preterite (escabulló, escabulleron, gruñó)
+                    inflection("lló", "ller", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("lló", "llir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("lleron", "ller", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("lleron", "llir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("ñó", "ñer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("ñó", "ñir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("ñeron", "ñer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("ñeron", "ñir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     // -uir verbs
                     inflection("í", "uir", &["v"], &["v"], RuleType::Suffix),
                     // Verbs with irregular forms
@@ -526,6 +557,11 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("ayendo", "aer", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("eyendo", "eer", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("uyendo", "uir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    // -ll / -ñ stems drop i in progressive (escabullendo, gruñendo)
+                    inflection("llendo", "ller", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("llendo", "llir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("ñendo", "ñer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("ñendo", "ñir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     // irregular
                     inflection("oyendo", "oír", &["v"], &["v"], RuleType::WholeWord),
                     inflection("yendo", "ir", &["v"], &["v"], RuleType::WholeWord),
@@ -783,6 +819,14 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     generic_stem_change_rule("ue", "o", "(a|as|a|an)", "ir", &["v_ir"], &["v_ir"]),
                     // e->i for -ir
                     generic_stem_change_rule("i", "e", "(a|as|a|an)", "ir", &["v_ir"], &["v_ir"]),
+                    // Orthographic + stem changes (-car -> -qu-, -gar -> -gu-, -zar -> -c-, etc.)
+                    generic_stem_change_rule("ue", "o", "(que|ques|quen)", "car", &["v_ar"], &["v_ar"]),
+                    generic_stem_change_rule("ie", "e", "(gue|gues|guen)", "gar", &["v_ar"], &["v_ar"]),
+                    generic_stem_change_rule("ue", "o", "(gue|gues|guen)", "gar", &["v_ar"], &["v_ar"]),
+                    generic_stem_change_rule("ie", "e", "(ce|ces|cen)", "zar", &["v_ar"], &["v_ar"]),
+                    generic_stem_change_rule("ue", "o", "(ce|ces|cen)", "zar", &["v_ar"], &["v_ar"]),
+                    generic_stem_change_rule("i", "e", "(ja|jas|jan)", "gir", &["v_ir"], &["v_ir"]),
+                    generic_stem_change_rule("i", "e", "(ga|gas|gan)", "guir", &["v_ir"], &["v_ir"]),
                     // Regular subjunctive endings
                     // -ar verbs
                     inflection("e", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
@@ -790,6 +834,27 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("emos", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("éis", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     inflection("en", "ar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    // -car, -gar, -zar, -guar
+                    inflection("que", "car", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("ques", "car", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("quemos", "car", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("quéis", "car", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("quen", "car", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("gue", "gar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("gues", "gar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("guemos", "gar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("guéis", "gar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("guen", "gar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("ce", "zar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("ces", "zar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("cemos", "zar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("céis", "zar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("cen", "zar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("güe", "guar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("gües", "guar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("güemos", "guar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("güéis", "guar", &["v_ar"], &["v_ar"], RuleType::Suffix),
+                    inflection("güen", "guar", &["v_ar"], &["v_ar"], RuleType::Suffix),
                     // -er verbs
                     inflection("a", "er", &["v_er"], &["v_er"], RuleType::Suffix),
                     inflection("as", "er", &["v_er"], &["v_er"], RuleType::Suffix),
@@ -802,6 +867,47 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("amos", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("áis", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("an", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    // -ger, -gir, -guir, -cer, -cir, -uir
+                    inflection("ja", "ger", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("jas", "ger", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("jamos", "ger", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("jáis", "ger", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("jan", "ger", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("ja", "gir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("jas", "gir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("jamos", "gir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("jáis", "gir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("jan", "gir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("ga", "guir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("gas", "guir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("gamos", "guir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("gáis", "guir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("gan", "guir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("zca", "cer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("zcas", "cer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("zcamos", "cer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("zcáis", "cer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("zcan", "cer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("zca", "cir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("zcas", "cir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("zcamos", "cir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("zcáis", "cir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("zcan", "cir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("za", "cer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("zas", "cer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("zamos", "cer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("záis", "cer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("zan", "cer", &["v_er"], &["v_er"], RuleType::Suffix),
+                    inflection("za", "cir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("zas", "cir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("zamos", "cir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("záis", "cir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("zan", "cir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("uya", "uir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("uyas", "uir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("uyamos", "uir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("uyáis", "uir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                    inflection("uyan", "uir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     // Irregular verbs
                     // dar
                     inflection("dé", "dar", &["v"], &["v"], RuleType::WholeWord),
@@ -882,6 +988,32 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("ieseis", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("ieran", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
                     inflection("iesen", "ir", &["v_ir"], &["v_ir"], RuleType::Suffix),
+                ]
+                .into_iter()
+                .chain(
+                    // -ll / -ñ stems drop i in imperfect subjunctive (escabulleran -> escabullir, gruñera -> gruñir)
+                    ["ll", "ñ"].into_iter().flat_map(|stem| {
+                        [("er", &["v_er"][..]), ("ir", &["v_ir"][..])]
+                            .into_iter()
+                            .flat_map(move |(ending, cond)| {
+                                [
+                                    "era", "ese", "eras", "eses", "éramos", "ésemos", "erais",
+                                    "eseis", "eran", "esen",
+                                ]
+                                .into_iter()
+                                .map(move |sfx| {
+                                    inflection(
+                                        &format!("{stem}{sfx}"),
+                                        format!("{stem}{ending}").leak(),
+                                        cond,
+                                        cond,
+                                        RuleType::Suffix,
+                                    )
+                                })
+                            })
+                    }),
+                )
+                .chain([
                     // irregular verbs
                     // ser
                     inflection("fuera", "ser", &["v"], &["v"], RuleType::WholeWord),
@@ -905,7 +1037,8 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                     inflection("fueseis", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("fueran", "ir", &["v"], &["v"], RuleType::WholeWord),
                     inflection("fuesen", "ir", &["v"], &["v"], RuleType::WholeWord),
-                ],
+                ])
+                .collect(),
                 i18n: None,
             },
         ),
@@ -992,10 +1125,130 @@ static ES_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
                 i18n: None,
             },
         ),
+        (
+            "enclitic pronoun",
+            Transform {
+                name: "enclitic pronoun",
+                description: Some("Verb with attached object pronoun(s)"),
+                rules: {
+                    const SINGLE_PRONOUNS: [&str; 10] =
+                        ["lo", "la", "los", "las", "le", "les", "me", "te", "nos", "os"];
+                    const INDIRECT_PRONOUNS: [&str; 5] = ["me", "te", "se", "nos", "os"];
+                    const DIRECT_PRONOUNS: [&str; 4] = ["lo", "la", "los", "las"];
+
+                    let mut rules = Vec::new();
+
+                    // Infinitive + single enclitic pronoun: drenarlo -> drenar, verla -> ver
+                    for (ending, cond) in [("ar", &["v_ar"][..]), ("er", &["v_er"][..]), ("ir", &["v_ir"][..])] {
+                        for pronoun in SINGLE_PRONOUNS {
+                            rules.push(inflection(
+                                &format!("{ending}{pronoun}"),
+                                ending,
+                                cond,
+                                cond,
+                                RuleType::Suffix,
+                            ));
+                        }
+                    }
+
+                    // Accented infinitive + double enclitic pronouns: drenárselo -> drenar
+                    for (accented, plain, cond) in [
+                        ("ár", "ar", &["v_ar"][..]),
+                        ("ér", "er", &["v_er"][..]),
+                        ("ír", "ir", &["v_ir"][..]),
+                    ] {
+                        for indirect in INDIRECT_PRONOUNS {
+                            for direct in DIRECT_PRONOUNS {
+                                rules.push(inflection(
+                                    &format!("{accented}{indirect}{direct}"),
+                                    plain,
+                                    cond,
+                                    cond,
+                                    RuleType::Suffix,
+                                ));
+                            }
+                        }
+                    }
+
+                    // Gerund + single or double enclitic pronoun(s): drenándolo -> drenando
+                    for (accented, plain, cond) in [
+                        ("ándo", "ando", &["v_ar"][..]),
+                        ("iéndo", "iendo", &["v_er", "v_ir"][..]),
+                        ("yéndo", "yendo", &["v"][..]),
+                    ] {
+                        for pronoun in SINGLE_PRONOUNS.into_iter().chain(["se"]) {
+                            rules.push(inflection(
+                                &format!("{accented}{pronoun}"),
+                                plain,
+                                cond,
+                                cond,
+                                RuleType::Suffix,
+                            ));
+                        }
+                        for indirect in INDIRECT_PRONOUNS {
+                            for direct in DIRECT_PRONOUNS {
+                                rules.push(inflection(
+                                    &format!("{accented}{indirect}{direct}"),
+                                    plain,
+                                    cond,
+                                    cond,
+                                    RuleType::Suffix,
+                                ));
+                            }
+                        }
+                    }
+
+                    // Vosotros imperative + os (drops final -d): apresuraos -> apresurad
+                    rules.push(inflection("aos", "ad", &["v_ar"], &["v_ar"], RuleType::Suffix));
+                    rules.push(inflection("eos", "ed", &["v_er"], &["v_er"], RuleType::Suffix));
+                    rules.push(inflection("íos", "id", &["v_ir"], &["v_ir"], RuleType::Suffix));
+
+                    // Nosotros imperative + nos (drops -s): apresurémonos -> apresuremos
+                    rules.push(inflection("émonos", "emos", &["v"], &["v"], RuleType::Suffix));
+                    rules.push(inflection("ámonos", "amos", &["v"], &["v"], RuleType::Suffix));
+
+                    // Accented imperative/subjunctive/verb + double enclitic: cómetelo -> come, díselo -> di
+                    rules.push(Rule {
+                        rule_type: RuleType::Other,
+                        is_inflected: ES_ACCENTED_DOUBLE_ENCLITIC_PATTERN.clone(),
+                        deinflected: None,
+                        deinflect_fn: DeinflectFnType::EsStripEncliticAndAccent,
+                        inflected_str: None,
+                        conditions_in: &["v"],
+                        conditions_out: &["v"],
+                    });
+
+                    // Accented imperative/subjunctive/verb + single enclitic: apresúrense -> apresuren
+                    rules.push(Rule {
+                        rule_type: RuleType::Other,
+                        is_inflected: ES_ACCENTED_SINGLE_ENCLITIC_PATTERN.clone(),
+                        deinflected: None,
+                        deinflect_fn: DeinflectFnType::EsStripEncliticAndAccent,
+                        inflected_str: None,
+                        conditions_in: &["v"],
+                        conditions_out: &["v"],
+                    });
+
+                    // Short unaccented irregular commands + single enclitic: hazlo -> haz, dime -> di
+                    rules.push(Rule {
+                        rule_type: RuleType::Other,
+                        is_inflected: ES_SHORT_IMPERATIVE_ENCLITIC_PATTERN.clone(),
+                        deinflected: None,
+                        deinflect_fn: DeinflectFnType::EsStripEncliticAndAccent,
+                        inflected_str: None,
+                        conditions_in: &["v"],
+                        conditions_out: &["v"],
+                    });
+
+                    rules
+                },
+                i18n: None,
+            },
+        ),
     ]))
 });
 
-pub(crate) static ES_TRANSFORM_TESTS: LazyLock<[&[TransformTest]; 6]> = LazyLock::new(|| {
+pub(crate) static ES_TRANSFORM_TESTS: LazyLock<[&[TransformTest]; 9]> = LazyLock::new(|| {
     [
         &*ES_PRESENT_INDICITIVE_VERB_TESTS,
         &*ES_NOUN_TESTS,
@@ -1003,6 +1256,9 @@ pub(crate) static ES_TRANSFORM_TESTS: LazyLock<[&[TransformTest]; 6]> = LazyLock
         &*ES_PARTICIPLE_TESTS,
         &*ES_REFLEXIVE_TESTS,
         &*ES_IMPERATIVE_AND_STEM_TESTS,
+        &*ES_ENCLITIC_TESTS,
+        &*ES_LL_NY_TESTS,
+        &*ES_ORTHOGRAPHIC_SUBJUNCTIVE_TESTS,
     ]
 });
 
@@ -1251,8 +1507,38 @@ pub(crate) static ES_FEMININE_ADJECTIVE_TESTS: LazyLock<[TransformTest; 4]> = La
     ]
 });
 
-pub(crate) static ES_PARTICIPLE_TESTS: LazyLock<[TransformTest; 5]> = LazyLock::new(|| {
+pub(crate) static ES_PARTICIPLE_TESTS: LazyLock<[TransformTest; 7]> = LazyLock::new(|| {
     [
+        TransformTest {
+            term: "discutir",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "discutidos",
+                    rule: "v",
+                    reasons: vec!["participle", "plural"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "discutidas",
+                    rule: "v",
+                    reasons: vec!["participle", "feminine adjective", "plural"],
+                },
+            ],
+        },
+        TransformTest {
+            term: "atorar",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "atorados",
+                    rule: "v",
+                    reasons: vec!["participle", "plural"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "atoradas",
+                    rule: "v",
+                    reasons: vec!["participle", "feminine adjective", "plural"],
+                },
+            ],
+        },
         // -ar verbs: ado -> ar
         TransformTest {
             term: "escuchar",
@@ -1410,6 +1696,236 @@ pub(crate) static ES_IMPERATIVE_AND_STEM_TESTS: LazyLock<[TransformTest; 5]> = L
         },
     ]
 });
+
+pub(crate) static ES_ENCLITIC_TESTS: LazyLock<[TransformTest; 8]> = LazyLock::new(|| {
+    [
+        TransformTest {
+            term: "apresurar",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "apresúrense",
+                    rule: "v",
+                    reasons: vec!["present subjunctive", "enclitic pronoun"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "apresúrate",
+                    rule: "v",
+                    reasons: vec!["imperative", "enclitic pronoun"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "apresurémonos",
+                    rule: "v",
+                    reasons: vec!["imperative", "enclitic pronoun"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "apresuraos",
+                    rule: "v",
+                    reasons: vec!["imperative", "enclitic pronoun"],
+                },
+            ],
+        },
+        TransformTest {
+            term: "sentar",
+            sources: vec![LanguageTransformerTestCase {
+                inner: "siéntate",
+                rule: "v",
+                reasons: vec!["imperative", "enclitic pronoun"],
+            }],
+        },
+        TransformTest {
+            term: "drenar",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "drenarlo",
+                    rule: "v",
+                    reasons: vec!["enclitic pronoun"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "drenárselo",
+                    rule: "v",
+                    reasons: vec!["enclitic pronoun"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "drenándolo",
+                    rule: "v",
+                    reasons: vec!["progressive", "enclitic pronoun"],
+                },
+            ],
+        },
+        TransformTest {
+            term: "comer",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "comiéndoselo",
+                    rule: "v",
+                    reasons: vec!["progressive", "enclitic pronoun"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "cómetelo",
+                    rule: "v",
+                    reasons: vec!["imperative", "enclitic pronoun"],
+                },
+            ],
+        },
+        TransformTest {
+            term: "leer",
+            sources: vec![LanguageTransformerTestCase {
+                inner: "leyéndolo",
+                rule: "v",
+                reasons: vec!["progressive", "enclitic pronoun"],
+            }],
+        },
+        TransformTest {
+            term: "hacer",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "hacerlo",
+                    rule: "v",
+                    reasons: vec!["enclitic pronoun"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "hazlo",
+                    rule: "v",
+                    reasons: vec!["imperative", "enclitic pronoun"],
+                },
+            ],
+        },
+        TransformTest {
+            term: "decir",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "decírtelo",
+                    rule: "v",
+                    reasons: vec!["enclitic pronoun"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "díselo",
+                    rule: "v",
+                    reasons: vec!["imperative", "enclitic pronoun"],
+                },
+            ],
+        },
+        TransformTest {
+            term: "dormir",
+            sources: vec![LanguageTransformerTestCase {
+                inner: "duérmete",
+                rule: "v",
+                reasons: vec!["imperative", "enclitic pronoun"],
+            }],
+        },
+    ]
+});
+
+pub(crate) static ES_LL_NY_TESTS: LazyLock<[TransformTest; 2]> = LazyLock::new(|| {
+    [
+        TransformTest {
+            term: "escabullir",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "escabulleran",
+                    rule: "v",
+                    reasons: vec!["imperfect subjunctive"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "escabulló",
+                    rule: "v",
+                    reasons: vec!["preterite"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "escabulleron",
+                    rule: "v",
+                    reasons: vec!["preterite"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "escabullendo",
+                    rule: "v",
+                    reasons: vec!["progressive"],
+                },
+            ],
+        },
+        TransformTest {
+            term: "gruñir",
+            sources: vec![
+                LanguageTransformerTestCase {
+                    inner: "gruñera",
+                    rule: "v",
+                    reasons: vec!["imperfect subjunctive"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "gruñó",
+                    rule: "v",
+                    reasons: vec!["preterite"],
+                },
+                LanguageTransformerTestCase {
+                    inner: "gruñendo",
+                    rule: "v",
+                    reasons: vec!["progressive"],
+                },
+            ],
+        },
+    ]
+});
+
+pub(crate) static ES_ORTHOGRAPHIC_SUBJUNCTIVE_TESTS: LazyLock<[TransformTest; 6]> =
+    LazyLock::new(|| {
+        [
+            TransformTest {
+                term: "acercar",
+                sources: vec![
+                    LanguageTransformerTestCase {
+                        inner: "acérquese",
+                        rule: "v",
+                        reasons: vec!["present subjunctive", "enclitic pronoun"],
+                    },
+                    LanguageTransformerTestCase {
+                        inner: "acerque",
+                        rule: "v",
+                        reasons: vec!["present subjunctive"],
+                    },
+                ],
+            },
+            TransformTest {
+                term: "pagar",
+                sources: vec![LanguageTransformerTestCase {
+                    inner: "pague",
+                    rule: "v",
+                    reasons: vec!["present subjunctive"],
+                }],
+            },
+            TransformTest {
+                term: "empezar",
+                sources: vec![LanguageTransformerTestCase {
+                    inner: "empiece",
+                    rule: "v",
+                    reasons: vec!["present subjunctive"],
+                }],
+            },
+            TransformTest {
+                term: "elegir",
+                sources: vec![LanguageTransformerTestCase {
+                    inner: "elija",
+                    rule: "v",
+                    reasons: vec!["present subjunctive"],
+                }],
+            },
+            TransformTest {
+                term: "seguir",
+                sources: vec![LanguageTransformerTestCase {
+                    inner: "siga",
+                    rule: "v",
+                    reasons: vec!["present subjunctive"],
+                }],
+            },
+            TransformTest {
+                term: "conocer",
+                sources: vec![LanguageTransformerTestCase {
+                    inner: "conozca",
+                    rule: "v",
+                    reasons: vec!["present subjunctive"],
+                }],
+            },
+        ]
+    });
 
 #[cfg(test)]
 mod estransforms {

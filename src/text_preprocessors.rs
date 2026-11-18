@@ -160,3 +160,30 @@ pub const STANDARDIZE_KANJI: TextProcessor = TextProcessor {
     options: BASIC_TEXT_PROCESSOR_OPTIONS,
     process: standardize_kanji_helper,
 };
+
+fn process_eszett(s: &str, setting: TextProcessorSetting) -> String {
+    match setting {
+        TextProcessorSetting::BiDirectional(opt) => match opt {
+            BidirectionalPreProcessorOptions::Off => s.to_string(),
+            BidirectionalPreProcessorOptions::Direct => {
+                s.replace('ẞ', "SS").replace('ß', "ss")
+            }
+            BidirectionalPreProcessorOptions::Inverse => {
+                s.replace("SS", "ẞ").replace("ss", "ß")
+            }
+        },
+        _ => s.to_string(),
+    }
+}
+
+pub const ESZETT_PREPROCESSOR: BidirectionalConversionPreProcessor =
+    BidirectionalConversionPreProcessor {
+        name: "Convert \"ß\" to \"ss\"",
+        description: "ß → ss, ẞ → SS and vice versa",
+        options: &[
+            TextProcessorSetting::BiDirectional(BidirectionalPreProcessorOptions::Off),
+            TextProcessorSetting::BiDirectional(BidirectionalPreProcessorOptions::Direct),
+            TextProcessorSetting::BiDirectional(BidirectionalPreProcessorOptions::Inverse),
+        ],
+        process: process_eszett,
+    };

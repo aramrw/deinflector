@@ -55,8 +55,8 @@ pub fn generic_stem_change_rule(
     conditions_out: &'static [&'static str],
 ) -> Rule {
     // 1. Create the full regex pattern to check if a word is inflected.
-    // e.g., "ie([a-z]*)(o|as|a|an)$"
-    let is_inflected_re = format!("{stem_from}([a-z]*){ending_pattern}$");
+    // e.g., "ie(\p{Ll}*)(o|as|a|an)$"
+    let is_inflected_re = format!("{stem_from}(\\p{{Ll}}*){ending_pattern}$");
     let is_inflected = Regex::new(&is_inflected_re).unwrap();
 
     // 2. Define the deinflection logic by creating the parameterized enum variant.

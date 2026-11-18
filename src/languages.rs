@@ -29,6 +29,7 @@ fn test_get_language_summaries() {
     let summaries = get_language_summaries();
     let isos: Vec<&str> = summaries.iter().map(|s| s.iso).collect();
     assert!(isos.contains(&"ja"));
+    assert!(isos.contains(&"de"));
     assert!(isos.contains(&"en"));
     assert!(isos.contains(&"es"));
     assert!(isos.contains(&"yue"));
@@ -38,6 +39,7 @@ fn test_get_language_summaries() {
     assert!(!is_text_lookup_worthy("hello", "ja"));
     assert!(is_text_lookup_worthy("中文", "zh"));
     assert!(!is_text_lookup_worthy("hello", "zh"));
+    assert!(is_text_lookup_worthy("hallo", "de"));
     assert!(is_text_lookup_worthy("hello", "en"));
     assert!(is_text_lookup_worthy("hola", "es"));
     assert!(is_text_lookup_worthy("廣東話", "yue"));

@@ -361,7 +361,7 @@ impl LanguageTransformer {
                             text: text.clone(),
                             trace: trace.clone(),
                         };
-                        println!("[error]: {e}");
+                        eprintln!("[error]: {e}");
                         continue;
                     }
 
@@ -649,6 +649,10 @@ pub enum DeinflectFnType {
         ending_to: &'static str,
     },
     Pronominal,
+    EsStripEncliticAndAccent,
+    DeSeparatedPrefix,
+    DeBasicPastParticiple,
+    DeSeparablePastParticiple,
 }
 
 pub fn partialeq_static_regex(x: &&'static Regex, y: &&'static Regex) -> bool {
@@ -706,6 +710,36 @@ pub trait RuleDeinflectFnTrait: 'static {
                 let verb_stem = captures.get(2).unwrap().as_str();
                 let verb_ending = captures.get(3).unwrap().as_str();
                 format!("{}{}{}", verb_stem, verb_ending, "se")
+            }
+            DeinflectFnType::EsStripEncliticAndAccent => {
+                let captures = self.is_inflected_regex().captures(text).unwrap().unwrap();
+                let stem = captures.get(1).unwrap().as_str();
+                stem.chars()
+                    .map(|c| match c {
+                        'á' => 'a',
+                        'é' => 'e',
+                        'í' => 'i',
+                        'ó' => 'o',
+                        'ú' => 'u',
+                        other => other,
+                    })
+                    .collect()
+            }
+            DeinflectFnType::DeSeparatedPrefix => {
+                let captures = self.is_inflected_regex().captures(text).unwrap().unwrap();
+                let verb = captures.get(1).unwrap().as_str();
+                format!("{verb} {}", self.deinflected())
+            }
+            DeinflectFnType::DeBasicPastParticiple => {
+                let captures = self.is_inflected_regex().captures(text).unwrap().unwrap();
+                let stem = captures.get(1).unwrap().as_str();
+                format!("{stem}{}", self.deinflected())
+            }
+            DeinflectFnType::DeSeparablePastParticiple => {
+                let captures = self.is_inflected_regex().captures(text).unwrap().unwrap();
+                let prefix = captures.get(1).unwrap().as_str();
+                let stem = captures.get(2).unwrap().as_str();
+                format!("{prefix}{stem}{}", self.deinflected())
             }
 
             // Destructure to get all the stem-change parameters
