@@ -209,7 +209,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("ing$").unwrap(),
             inflected_str: Some("ing".to_string()), // Added
-            deinflected: "",
+            deinflected: Some(""),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -218,7 +218,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("ing$").unwrap(),
             inflected_str: Some("ing".to_string()), // Added
-            deinflected: "e",
+            deinflected: Some("e"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -227,7 +227,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("ying$").unwrap(),
             inflected_str: Some("ying".to_string()), // Added
-            deinflected: "ie",
+            deinflected: Some("ie"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -236,7 +236,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("cking$").unwrap(),
             inflected_str: Some("cking".to_string()), // Added
-            deinflected: "c",
+            deinflected: Some("c"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -245,7 +245,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("bbing$").unwrap(),
             inflected_str: Some("bbing".to_string()), // Added
-            deinflected: "b",
+            deinflected: Some("b"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -254,7 +254,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("dding$").unwrap(),
             inflected_str: Some("dding".to_string()), // Added
-            deinflected: "d",
+            deinflected: Some("d"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -263,7 +263,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("gging$").unwrap(),
             inflected_str: Some("gging".to_string()), // Added
-            deinflected: "g",
+            deinflected: Some("g"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -272,7 +272,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("kking$").unwrap(),
             inflected_str: Some("kking".to_string()), // Added
-            deinflected: "k",
+            deinflected: Some("k"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -281,7 +281,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("lling$").unwrap(),
             inflected_str: Some("lling".to_string()), // Added
-            deinflected: "l",
+            deinflected: Some("l"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -290,7 +290,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("mming$").unwrap(),
             inflected_str: Some("mming".to_string()), // Added
-            deinflected: "m",
+            deinflected: Some("m"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -299,7 +299,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("nning$").unwrap(),
             inflected_str: Some("nning".to_string()), // Added
-            deinflected: "n",
+            deinflected: Some("n"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -308,7 +308,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("pping$").unwrap(),
             inflected_str: Some("pping".to_string()), // Added
-            deinflected: "p",
+            deinflected: Some("p"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -317,7 +317,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("rring$").unwrap(),
             inflected_str: Some("rring".to_string()), // Added
-            deinflected: "r",
+            deinflected: Some("r"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -326,7 +326,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("ssing$").unwrap(),
             inflected_str: Some("ssing".to_string()), // Added
-            deinflected: "s",
+            deinflected: Some("s"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -335,7 +335,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("tting$").unwrap(),
             inflected_str: Some("tting".to_string()), // Added
-            deinflected: "t",
+            deinflected: Some("t"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -344,7 +344,7 @@ fn ing_suffix_inflections() {
             rule_type: RuleType::Suffix,
             is_inflected: Regex::new("zzing$").unwrap(),
             inflected_str: Some("zzing".to_string()), // Added
-            deinflected: "z",
+            deinflected: Some("z"),
             deinflect_fn: DeinflectFnType::GenericSuffix,
             conditions_in: &["v"],
             conditions_out: &["v"],
@@ -353,30 +353,30 @@ fn ing_suffix_inflections() {
 
     passert_eq!(&*ING_SUFFIX_INFLECTIONS, expected);
 
-    let deinflect_txt_expected = [
-        "going to w",
-        "going to we",
-        "going to ie",
-        "going toc",
-        "going tob",
-        "going tod",
-        "going tog",
-        "going tok",
-        "going tol",
-        "going tom",
-        "going ton",
-        "going top",
-        "going tor",
-        "going tos",
-        "going tot",
-        "going toz",
-    ]
-    .to_vec();
-    let results = ING_SUFFIX_INFLECTIONS
-        .iter()
-        .map(|rule| rule.deinflect("going to walk"))
-        .collect::<Vec<String>>();
-    passert_eq!(deinflect_txt_expected, results);
+    let test_words = [
+        ("walking", "walk"),
+        ("driving", "drive"),
+        ("lying", "lie"),
+        ("panicking", "panic"),
+        ("rubbing", "rub"),
+        ("bidding", "bid"),
+        ("rigging", "rig"),
+        ("trekking", "trek"),
+        ("travelling", "travel"),
+        ("swimming", "swim"),
+        ("running", "run"),
+        ("stopping", "stop"),
+        ("starring", "star"),
+        ("gassing", "gas"),
+        ("getting", "get"),
+        ("quizzing", "quiz"),
+    ];
+    for (rule, (inflected, expected_deinflected)) in
+        ING_SUFFIX_INFLECTIONS.iter().zip(test_words.iter())
+    {
+        assert!(rule.is_inflected.is_match(inflected).unwrap());
+        passert_eq!(rule.deinflect(inflected), *expected_deinflected);
+    }
 }
 
 /// ["walks", "teaches", "tries"]
@@ -478,7 +478,8 @@ fn create_phrasal_verb_inflections_from_suffix_inflections(
         .flat_map(|sr| {
             // remove trailing '$' from is_inflected
             let inflected_suffix = sr.is_inflected.as_str().replace('$', "");
-            let deinflected_suffix = sr.deinflected;
+            // let deinflected_suffix = sr.deinflected;
+            let deinflected_suffix = sr.deinflected.unwrap_or("");
             // create verb inflection based on suffixes
             vec![create_phrasal_verb_inflection(
                 inflected_suffix,
@@ -995,8 +996,8 @@ static EN_TRANSFORMS_MAP: LazyLock<TransformMap> = LazyLock::new(|| {
     ]))
 });
 
-pub(crate) static EN_TRANSFORM_TESTS: LazyLock<[&TransformTest; 1]> =
-    LazyLock::new(|| [&EN_VERB_TESTS]);
+pub(crate) static EN_TRANSFORM_TESTS: LazyLock<[&TransformTest; 2]> =
+    LazyLock::new(|| [&EN_VERB_TESTS, &EN_ADJ_TESTS]);
 
 pub(crate) static EN_VERB_TESTS: LazyLock<TransformTest> = LazyLock::new(|| TransformTest {
     term: "walk",

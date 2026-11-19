@@ -26,11 +26,12 @@ pub fn inflection(
         ),
     };
     let is_inflected = Regex::new(&regx).unwrap();
-    let deinflected = if deinflected.is_empty() {
-        None
-    } else {
-        Some(deinflected)
-    };
+    // let deinflected = if deinflected.is_empty() {
+    //     None
+    // } else {
+    //     Some(deinflected)
+    // };
+    let deinflected = Some(deinflected);
     Rule {
         rule_type,
         is_inflected,
@@ -54,8 +55,8 @@ pub fn generic_stem_change_rule(
     conditions_out: &'static [&'static str],
 ) -> Rule {
     // 1. Create the full regex pattern to check if a word is inflected.
-    // e.g., "ie([a-z]*)(o|as|a|an)$"
-    let is_inflected_re = format!("{stem_from}([a-z]*){ending_pattern}$");
+    // e.g., "ie(\p{Ll}*)(o|as|a|an)$"
+    let is_inflected_re = format!("{stem_from}(\\p{{Ll}}*){ending_pattern}$");
     let is_inflected = Regex::new(&is_inflected_re).unwrap();
 
     // 2. Define the deinflection logic by creating the parameterized enum variant.
@@ -63,7 +64,8 @@ pub fn generic_stem_change_rule(
     let deinflect_fn = DeinflectFnType::GenericStemChange {
         stem_from,
         stem_to,
-        ending_re: format!("{ending_pattern}$").leak(),
+        // ending_re: format!("{ending_pattern}$").leak(),
+        ending_re: Box::leak(Box::new(Regex::new(&format!("{ending_pattern}$")).unwrap())),
         ending_to,
     };
 
@@ -107,7 +109,8 @@ pub fn special_cased_stem_change_rule(
         special_stem_to,
         default_stem_from,
         default_stem_to,
-        ending_re: format!("{ending_pattern}$").leak(),
+        // ending_re: format!("{ending_pattern}$").leak(),
+        ending_re: Box::leak(Box::new(Regex::new(&format!("{ending_pattern}$")).unwrap())),
         ending_to,
     };
 

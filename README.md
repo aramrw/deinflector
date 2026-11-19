@@ -8,11 +8,46 @@
 - [x] Japanese
 - [x] English
 - [x] Spanish
+- [x] German
 - [ ] Arabic
 - [ ] Farsi
 - [ ] Russian
 - [ ] Korean
 - [ ] Italian
+
+### Usage Example (Library)
+
+```rust
+use deinflector::multi_language_transformer::MultiLanguageTransformer;
+
+fn main() {
+    let mlt = MultiLanguageTransformer::default();
+
+    for candidate in mlt.transform("de", "aufgemacht") {
+        let reasons: Vec<&str> = candidate.trace.iter().map(|f| f.transform.as_str()).collect();
+        println!("{} ({:?})", candidate.text, reasons);
+    }
+
+    // Also works with "ja", "en", "es", etc.
+    for candidate in mlt.transform("es", "atorada") {
+        println!("{}", candidate.text);
+    }
+}
+```
+
+### Usage Example (CLI)
+
+```sh
+# Deinflect a word
+cargo run --bin deinflector -- -l de aufgemacht
+cargo run --bin deinflector -- -l es --json atorada
+
+# Match tokens in a sentence against a dictionary form
+cargo run --bin deinflector -- match -l es --target atorar --json comida atorada
+
+# Persistent JSON-lines server mode (stdin -> stdout)
+cargo run --bin deinflector -- serve
+```
 
 ### Adding a new language
 - Should read this first before adding a language [Adding Language Yomitan Docs](https://github.com/yomidevs/yomitan/blob/master/docs/development/language-features.md)

@@ -1,6 +1,7 @@
 #![allow(dead_code, unused_imports)]
 
 pub mod cjk_utils;
+pub mod de;
 pub mod descriptors;
 pub mod en;
 pub mod es;
