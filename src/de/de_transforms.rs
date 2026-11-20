@@ -11,7 +11,7 @@ use crate::{
     transforms::{generic_stem_change_rule, inflection},
 };
 
-const SEPARABLE_PREFIXES: &[&str] = &[
+pub const SEPARABLE_PREFIXES: &[&str] = &[
     "ab", "an", "auf", "aus", "auseinander", "bei", "da", "dabei", "dar", "daran", "dazwischen",
     "durch", "ein", "empor", "entgegen", "entlang", "entzwei", "fehl", "fern", "fest", "fort",
     "frei", "gegenüber", "gleich", "heim", "her", "herab", "heran", "herauf", "heraus",

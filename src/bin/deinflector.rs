@@ -2,6 +2,7 @@ use std::collections::{HashSet, VecDeque};
 use std::io::{self, BufRead, Write};
 use std::process;
 
+use deinflector::de::de_transforms::SEPARABLE_PREFIXES;
 use deinflector::multi_language_transformer::MultiLanguageTransformer;
 use deinflector::transformer::TransformedText;
 use serde::{Deserialize, Serialize};
@@ -20,6 +21,8 @@ enum ServeRequest {
         lang: String,
         target: String,
         tokens: Vec<String>,
+        #[serde(default)]
+        separators: Option<Vec<String>>,
     },
 }
 
@@ -109,6 +112,30 @@ fn expand_target_forms(lang: &str, target: &str) -> HashSet<String> {
         for variant in eszett_variants(&lower) {
             forms.insert(variant);
         }
+        // Informal `du` imperative drops `-en` (e.g. `machen` -> `mach`, `kommen` -> `komm`).
+        if let Some(stem) = german_bare_imperative_stem(&lower) {
+            for variant in eszett_variants(stem) {
+                forms.insert(variant);
+            }
+        }
+        // Determiner/pronoun dictionary headwords ending in `-er` (e.g. `keiner` -> `kein`).
+        if let Some(base) = match lower.as_str() {
+            "keiner" => Some("kein"),
+            "einer" => Some("ein"),
+            "meiner" => Some("mein"),
+            "deiner" => Some("dein"),
+            "seiner" => Some("sein"),
+            "ihrer" => Some("ihr"),
+            "unserer" => Some("unser"),
+            "eurer" => Some("euer"),
+            "dieser" => Some("dies"),
+            "jeder" => Some("jed"),
+            "welcher" => Some("welch"),
+            "mancher" => Some("manch"),
+            _ => None,
+        } {
+            forms.insert(base.to_string());
+        }
     }
     forms
 }
@@ -143,12 +170,137 @@ fn token_matches_target_forms(
     })
 }
 
+/// Splits a German separable verb (e.g. `aufhören`) into `(prefix, base_verb)` using the longest
+/// matching prefix in `SEPARABLE_PREFIXES`.
+fn split_german_separable_verb(lower_target: &str) -> Option<(&'static str, &str)> {
+    let mut best: Option<&'static str> = None;
+    for &prefix in SEPARABLE_PREFIXES {
+        if lower_target.starts_with(prefix) && lower_target.len() >= prefix.len() + 3 {
+            if best.map_or(true, |b| prefix.len() > b.len()) {
+                best = Some(prefix);
+            }
+        }
+    }
+    best.map(|p| (p, &lower_target[p.len()..]))
+}
+
+fn german_bare_imperative_stem(base_verb: &str) -> Option<&str> {
+    if base_verb.ends_with("en") && base_verb.len() > 4 {
+        Some(&base_verb[..base_verb.len() - 2])
+    } else if base_verb.ends_with('n') && base_verb.len() > 3 {
+        Some(&base_verb[..base_verb.len() - 1])
+    } else {
+        None
+    }
+}
+
+fn is_german_clause_boundary(
+    idx: usize,
+    tokens: &[String],
+    separators: Option<&[String]>,
+) -> bool {
+    if idx + 1 >= tokens.len() {
+        return true;
+    }
+    if let Some(seps) = separators {
+        if let Some(sep) = seps.get(idx) {
+            if sep.chars().any(|c| {
+                matches!(
+                    c,
+                    ',' | '.' | '!' | '?' | ';' | ':' | '—' | '–' | '(' | ')' | '[' | ']' | '\n' | '\r'
+                )
+            }) {
+                return true;
+            }
+        }
+    }
+    let next_lower = tokens[idx + 1].to_lowercase();
+    matches!(
+        next_lower.as_str(),
+        "und" | "oder" | "aber" | "denn" | "sondern" | "weil" | "dass" | "obwohl" | "wenn" | "als" | "zu"
+    )
+}
+
+/// Matches German split separable verbs (`aufhören` -> `Hör ... auf`, `Er hört ... auf.`).
+fn find_german_separable_matches(
+    mlt: &MultiLanguageTransformer,
+    target_word: &str,
+    tokens: &[String],
+    separators: Option<&[String]>,
+) -> Vec<usize> {
+    let lower_target = target_word.trim().to_lowercase();
+    let Some((prefix, base_verb)) = split_german_separable_verb(&lower_target) else {
+        return Vec::new();
+    };
+    let base_forms = expand_target_forms("de", base_verb);
+    let bare_stem = german_bare_imperative_stem(base_verb);
+
+    let mut matched = Vec::new();
+    let mut clause_start = 0;
+
+    for i in 0..tokens.len() {
+        if !is_german_clause_boundary(i, tokens, separators) {
+            continue;
+        }
+        let clause_end = i + 1;
+        if clause_end - clause_start >= 2 {
+            let prefix_idx = clause_end - 1;
+            let prefix_tok_lower = tokens[prefix_idx].trim().to_lowercase();
+            if prefix_tok_lower == prefix {
+                let mut found_verb = false;
+                for v_idx in clause_start..prefix_idx {
+                    let v_lower = tokens[v_idx].trim().to_lowercase();
+                    let is_bare_imp = bare_stem.is_some_and(|stem| v_lower == stem);
+                    if is_bare_imp
+                        || token_matches_target_forms(mlt, "de", &tokens[v_idx], &base_forms)
+                    {
+                        matched.push(v_idx);
+                        found_verb = true;
+                    }
+                }
+                if found_verb {
+                    matched.push(prefix_idx);
+                }
+            }
+
+            // Also match immediately adjacent `verb + prefix` (e.g. "Hör auf damit, Mitsu.")
+            for v_idx in clause_start..prefix_idx {
+                let next_lower = tokens[v_idx + 1].trim().to_lowercase();
+                if next_lower != prefix {
+                    continue;
+                }
+                let v_lower = tokens[v_idx].trim().to_lowercase();
+                let is_bare_imp = bare_stem.is_some_and(|stem| v_lower == stem);
+                if is_bare_imp
+                    || token_matches_target_forms(mlt, "de", &tokens[v_idx], &base_forms)
+                {
+                    matched.push(v_idx);
+                    matched.push(v_idx + 1);
+                }
+            }
+        }
+        clause_start = clause_end;
+    }
+
+    matched
+}
+
 /// Returns indices of `tokens` that deinflect to `target` (supports single- and multi-word targets).
 fn find_matched_token_indices(
     mlt: &MultiLanguageTransformer,
     lang: &str,
     target: &str,
     tokens: &[String],
+) -> Vec<usize> {
+    find_matched_token_indices_with_separators(mlt, lang, target, tokens, None)
+}
+
+fn find_matched_token_indices_with_separators(
+    mlt: &MultiLanguageTransformer,
+    lang: &str,
+    target: &str,
+    tokens: &[String],
+    separators: Option<&[String]>,
 ) -> Vec<usize> {
     let target_words: Vec<&str> = target.split_whitespace().collect();
     if target_words.is_empty() || tokens.is_empty() {
@@ -157,13 +309,23 @@ fn find_matched_token_indices(
 
     if target_words.len() == 1 {
         let target_forms = expand_target_forms(lang, target_words[0]);
-        return tokens
+        let mut matched: HashSet<usize> = tokens
             .iter()
             .enumerate()
             .filter_map(|(idx, tok)| {
                 token_matches_target_forms(mlt, lang, tok, &target_forms).then_some(idx)
             })
             .collect();
+
+        if lang == "de" {
+            for idx in find_german_separable_matches(mlt, target_words[0], tokens, separators) {
+                matched.insert(idx);
+            }
+        }
+
+        let mut indices: Vec<usize> = matched.into_iter().collect();
+        indices.sort_unstable();
+        return indices;
     }
 
     let expanded_words: Vec<HashSet<String>> = target_words
@@ -289,8 +451,15 @@ fn run_serve(mlt: &MultiLanguageTransformer) {
                 lang,
                 target,
                 tokens,
+                separators,
             }) => {
-                let matched_indices = find_matched_token_indices(mlt, &lang, &target, &tokens);
+                let matched_indices = find_matched_token_indices_with_separators(
+                    mlt,
+                    &lang,
+                    &target,
+                    &tokens,
+                    separators.as_deref(),
+                );
                 let matched_tokens: Vec<String> = matched_indices
                     .iter()
                     .map(|&i| tokens[i].clone())
@@ -507,6 +676,107 @@ mod tests {
                 &to_strings(&["Auf", "der", "Strasse"])
             ),
             vec![2]
+        );
+    }
+
+    #[test]
+    fn german_split_separable_verbs() {
+        let mlt = MultiLanguageTransformer::default();
+
+        // "Hör sofort auf!" -> aufhören
+        assert_eq!(
+            find_matched_token_indices_with_separators(
+                &mlt,
+                "de",
+                "aufhören",
+                &to_strings(&["Hör", "sofort", "auf"]),
+                Some(&to_strings(&[" ", " ", "!"])),
+            ),
+            vec![0, 2]
+        );
+
+        // "Er hört sofort auf." -> aufhören
+        assert_eq!(
+            find_matched_token_indices_with_separators(
+                &mlt,
+                "de",
+                "aufhören",
+                &to_strings(&["Er", "hört", "sofort", "auf"]),
+                Some(&to_strings(&[" ", " ", " ", "."])),
+            ),
+            vec![1, 3]
+        );
+
+        // "Sie hörte gestern damit auf, zu rauchen." -> aufhören
+        assert_eq!(
+            find_matched_token_indices_with_separators(
+                &mlt,
+                "de",
+                "aufhören",
+                &to_strings(&["Sie", "hörte", "gestern", "damit", "auf", "zu", "rauchen"]),
+                Some(&to_strings(&[" ", " ", " ", " ", ", ", " ", "."])),
+            ),
+            vec![1, 4]
+        );
+
+        // "Hör auf zu reden!" -> aufhören
+        assert_eq!(
+            find_matched_token_indices_with_separators(
+                &mlt,
+                "de",
+                "aufhören",
+                &to_strings(&["Hör", "auf", "zu", "reden"]),
+                Some(&to_strings(&[" ", " ", " ", "!"])),
+            ),
+            vec![0, 1]
+        );
+
+        // "Hör auf damit, Mitsu." -> aufhören
+        assert_eq!(
+            find_matched_token_indices_with_separators(
+                &mlt,
+                "de",
+                "aufhören",
+                &to_strings(&["Hör", "auf", "damit", "Mitsu"]),
+                Some(&to_strings(&[" ", " ", ", ", "."])),
+            ),
+            vec![0, 1]
+        );
+
+        // "Mach es bald wieder." -> machen (bare `du` imperative)
+        assert_eq!(
+            find_matched_token_indices_with_separators(
+                &mlt,
+                "de",
+                "machen",
+                &to_strings(&["Mach", "es", "bald", "wieder"]),
+                Some(&to_strings(&[" ", " ", " ", "."])),
+            ),
+            vec![0]
+        );
+
+        // "du bist kein Mensch." -> keiner (pronoun headword -> determiner base)
+        assert_eq!(
+            find_matched_token_indices_with_separators(
+                &mlt,
+                "de",
+                "keiner",
+                &to_strings(&["du", "bist", "kein", "Mensch"]),
+                Some(&to_strings(&[" ", " ", " ", "."])),
+            ),
+            vec![2]
+        );
+
+        // "Er hört Musik auf dem Bett." -> should NOT match preposition `auf`
+        assert_eq!(
+            find_matched_token_indices_with_separators(
+                &mlt,
+                "de",
+                "aufhören",
+                &to_strings(&["Er", "hört", "Musik", "auf", "dem", "Bett"]),
+                Some(&to_strings(&[" ", " ", " ", " ", " ", "."])),
+            ),
+            Vec::<usize>::new()
         );
     }
 }
